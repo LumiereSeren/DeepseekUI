@@ -1,4 +1,4 @@
---[[
+--[[ ByCcat
    ___               ____        __
   / _ \___ ___ ___  / __/__ ___ / /__
  / // / -_) -_) _ \_\ \/ -_) -_)  '_/
@@ -56,9 +56,9 @@
 @%-                                                                                              .*@
 @@@@+:.                                                                                       .-#@@@
 
-    DeepSeek UI  |  WindUI 1.6.65 改版  |  2026
+    DeepSeek UI
 
-    All rights reserved.
+   Ccat-2026 All rights reserved.
 ]]
 type ConfigType__DARKLUA_TYPE_a={
 Object:Instance,
@@ -460,7 +460,7 @@ end
 
 
 local j=d.Icon2(g.Icon,g.Type)
-local l=typeof(j)=="string"and string.find(j,'rbxassetid://')
+local l=typeof(j)=="string"
 
 if d.New then
 local m=e or d.New
@@ -477,8 +477,8 @@ ImageColor3=h[1].ThemeTag,
 ImageTransparency=i[1].ThemeTag,
 },
 Image=l and j or j[1],
-ImageRectSize=l and nil or j[2].ImageRectSize,
-ImageRectOffset=l and nil or j[2].ImageRectPosition,
+ImageRectSize=l and Vector2.new(0,0)or j[2].ImageRectSize,
+ImageRectOffset=l and Vector2.new(0,0)or j[2].ImageRectPosition,
 })
 
 
@@ -511,8 +511,8 @@ m.BackgroundTransparency=1
 m.ImageColor3=h[1].Color
 m.ImageTransparency=i[1].Value or nil
 m.Image=l and j or j[1]
-m.ImageRectSize=l and nil or j[2].ImageRectSize
-m.ImageRectOffset=l and nil or j[2].ImageRectPosition
+m.ImageRectSize=l and Vector2.new(0,0)or j[2].ImageRectSize
+m.ImageRectOffset=l and Vector2.new(0,0)or j[2].ImageRectPosition
 
 
 if not l and j[2].Parts then
@@ -648,7 +648,7 @@ SearchBarBorderTransparency=0.75,
 
 Notification="Background",
 Notification2="White",
-Notification2Transparency=0.92,
+Notification2Transparency=0.02,
 NotificationTitle="Text",
 NotificationTitleTransparency=0,
 NotificationContent="Text",
@@ -903,13 +903,19 @@ end
 
 function r.AddFontObject(u)
 table.insert(r.FontObjects,u)
-r.UpdateFont(r.Font)
+if not u:FindFirstAncestor("DeepSeekTicker")and not u:FindFirstAncestor("DeepSeekMini")then
+u.FontFace=Font.new(r.Font,u.FontFace.Weight,u.FontFace.Style)
+end
 end
 
 function r.UpdateFont(u)
-r.Font=u
-for v,x in next,r.FontObjects do
-x.FontFace=Font.new(u,x.FontFace.Weight,x.FontFace.Style)
+r.Font=typeof(u)=="Font"and u.Family or u
+for _,x in ipairs(r.FontObjects)do
+pcall(function()
+if x.Parent and not x:FindFirstAncestor("DeepSeekTicker")and not x:FindFirstAncestor("DeepSeekMini")then
+x.FontFace=Font.new(r.Font,x.FontFace.Weight,x.FontFace.Style)
+end
+end)
 end
 end
 
@@ -1426,6 +1432,7 @@ return z
 end
 
 function r.Image(x,z,A,B,C,F,G,H)
+if r.ResolveBrandImage then x=r.ResolveBrandImage(x)or x end
 B=B or"Temp"
 z=r.SanitizeFilename(z)
 
@@ -1708,326 +1715,130 @@ end
 
 
 return b end function a.f()
-local b=a.load'd'
-local d=b.New
-local e=b.Tween
-
-local f={
-Size=UDim2.new(0,300,1,-156),
-SizeLower=UDim2.new(0,300,1,-56),
-UICorner=18,
-UIPadding=14,
-
-Holder=nil,
-NotificationIndex=0,
-Notifications={},
-}
-
-function f.Init(g)
-local h={
-Lower=false,
-}
-
-function h.SetLower(i)
-h.Lower=i
-h.Frame.Size=i and f.SizeLower or f.Size
+local UI=a.load'd'
+local New=UI.New
+local Tween=UI.Tween
+local Module={Size=UDim2.new(0,300,1,-156),SizeLower=UDim2.new(0,300,1,-56),UICorner=0,UIPadding=14,NotificationIndex=0,Notifications={}}
+function Module.Init(gui)
+local state={Lower=false}
+state.Frame=New("Frame",{Name="NotificationHolder",Position=UDim2.new(1,-24,0,32),AnchorPoint=Vector2.new(1,0),Size=Module.Size,BackgroundTransparency=1,ClipsDescendants=false,Parent=gui},{New("UIListLayout",{HorizontalAlignment="Center",SortOrder="LayoutOrder",VerticalAlignment="Bottom",Padding=UDim.new(0,10)}),New("UIPadding",{PaddingBottom=UDim.new(0,24)})})
+function state.SetLower(value)state.Lower=value;state.Frame.Size=value and Module.SizeLower or Module.Size end
+return state
 end
-
-h.Frame=d("Frame",{
-Position=UDim2.new(1,-29,0,56),
-AnchorPoint=Vector2.new(1,0),
-Size=f.Size,
-Parent=g,
-BackgroundTransparency=1,
-
-
-
-
-},{
-d("UIListLayout",{
-HorizontalAlignment="Center",
-SortOrder="LayoutOrder",
-VerticalAlignment="Bottom",
-Padding=UDim.new(0,8),
-}),
-d("UIPadding",{
-PaddingBottom=UDim.new(0,29),
-}),
-})
-return h
-end
-
-function f.New(g)
-local h={
-Title=g.Title or"Notification",
-Content=g.Content or nil,
-Icon=g.Icon or nil,
-IconThemed=g.IconThemed,
-Background=g.Background,
-BackgroundImageTransparency=g.BackgroundImageTransparency,
-Duration=g.Duration or 5,
-Buttons=g.Buttons or{},
-CanClose=g.CanClose~=false,
-UIElements={},
-Closed=false,
-}
-
-
-
-f.NotificationIndex=f.NotificationIndex+1
-f.Notifications[f.NotificationIndex]=h
-
-
-
-
-
-
-
-
-
-local i
-
-if h.Icon then
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-i=b.Image(
-h.Icon,
-h.Title..":"..h.Icon,
-0,
-g.Window,
-"Notification",
-h.IconThemed
-)
-i.Size=UDim2.new(0,26,0,26)
-i.Position=UDim2.new(0,f.UIPadding,0,f.UIPadding)
-
-end
-
-local l
-if h.CanClose then
-l=d("ImageButton",{
-Image=b.Icon"x"[1],
-ImageRectSize=b.Icon"x"[2].ImageRectSize,
-ImageRectOffset=b.Icon"x"[2].ImageRectPosition,
-BackgroundTransparency=1,
-Size=UDim2.new(0,16,0,16),
-Position=UDim2.new(1,-f.UIPadding,0,f.UIPadding),
-AnchorPoint=Vector2.new(1,0),
-ThemeTag={
-ImageColor3="Text",
-},
-ImageTransparency=0.4,
-},{
-d("TextButton",{
-Size=UDim2.new(1,8,1,8),
-BackgroundTransparency=1,
-AnchorPoint=Vector2.new(0.5,0.5),
-Position=UDim2.new(0.5,0,0.5,0),
-Text="",
-}),
-})
-end
-
-local m=b.NewRoundFrame(f.UICorner,"Squircle",{
-Size=UDim2.new(0,0,1,0),
-ThemeTag={
-ImageTransparency="NotificationDurationTransparency",
-ImageColor3="NotificationDuration",
-},
-
-})
-
-local p=d("Frame",{
-Size=UDim2.new(1,h.Icon and-28-f.UIPadding or 0,1,0),
-Position=UDim2.new(1,0,0,0),
-AnchorPoint=Vector2.new(1,0),
-BackgroundTransparency=1,
-AutomaticSize="Y",
-},{
-d("UIPadding",{
-PaddingTop=UDim.new(0,f.UIPadding),
-PaddingLeft=UDim.new(0,f.UIPadding),
-PaddingRight=UDim.new(0,f.UIPadding),
-PaddingBottom=UDim.new(0,f.UIPadding),
-}),
-d("TextLabel",{
-AutomaticSize="Y",
-Size=UDim2.new(1,-30-f.UIPadding,0,0),
-TextWrapped=true,
-TextXAlignment="Left",
-RichText=true,
-BackgroundTransparency=1,
-TextSize=18,
-ThemeTag={
-TextColor3="NotificationTitle",
-TextTransparency="NotificationTitleTransparency",
-},
-Text=h.Title,
-FontFace=Font.new(b.Font,Enum.FontWeight.SemiBold),
-}),
-d("UIListLayout",{
-Padding=UDim.new(0,f.UIPadding/3),
-}),
-})
-
-if h.Content then
-d("TextLabel",{
-AutomaticSize="Y",
-Size=UDim2.new(1,0,0,0),
-TextWrapped=true,
-TextXAlignment="Left",
-RichText=true,
-BackgroundTransparency=1,
-
-TextSize=15,
-ThemeTag={
-TextColor3="NotificationContent",
-TextTransparency="NotificationContentTransparency",
-},
-Text=h.Content,
-FontFace=Font.new(b.Font,Enum.FontWeight.Medium),
-Parent=p,
-})
-end
-
-local r=b.NewRoundFrame(f.UICorner,"Squircle",{
-Size=UDim2.new(1,0,0,0),
-Position=UDim2.new(2,0,1,0),
-AnchorPoint=Vector2.new(0,1),
-AutomaticSize="Y",
-ImageTransparency=0.05,
-ThemeTag={
-ImageColor3="Notification",
-},
-
-},{
-b.NewRoundFrame(f.UICorner,"Squircle",{
-Size=UDim2.new(1,0,1,0),
-ThemeTag={
-ImageColor3="Notification2",
-ImageTransparency="Notification2Transparency",
-},
-}),
-d("Frame",{
-Size=UDim2.new(1,0,1,0),
-BackgroundTransparency=1,
-Name="DurationFrame",
-},{
-
-
-
-
-
-
-d("Frame",{
-Size=UDim2.new(1,0,1,0),
-BackgroundTransparency=1,
-ClipsDescendants=true,
-},{
-m,
-}),
-
-
-
-
-}),
-d("ImageLabel",{
-Name="Background",
-Image=h.Background,
-BackgroundTransparency=1,
-Size=UDim2.new(1,0,1,0),
-ScaleType="Crop",
-ImageTransparency=h.BackgroundImageTransparency,
-
-},{
-d("UICorner",{
-CornerRadius=UDim.new(0,f.UICorner),
-}),
-}),
-
-p,
-i,
-l,
-})
-
-local u=d("Frame",{
-BackgroundTransparency=1,
-Size=UDim2.new(1,0,0,0),
-Parent=g.Holder,
-},{
-r,
-})
-
-function h.Close(v)
-if not h.Closed then
-h.Closed=true
-e(
-u,
-0.45,
-{Size=UDim2.new(1,0,0,-8)},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
-e(r,0.55,{Position=UDim2.new(2,0,1,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-task.wait(0.45)
-u:Destroy()
+function Module.New(config)
+local notice={Title=config.Title or"Notification",Content=config.Content,Duration=config.Duration==nil and 5 or config.Duration,CanClose=config.CanClose~=false,Closed=false,UIElements={}}
+Module.NotificationIndex=Module.NotificationIndex+1
+local index=Module.NotificationIndex
+Module.Notifications[index]=notice
+local wrapper=New("Frame",{Name="DeepSeekNotification",Size=UDim2.new(1,0,0,0),BackgroundTransparency=1,ClipsDescendants=false,LayoutOrder=index,Parent=config.Holder})
+local mover=New("Frame",{Name="NotificationMotion",Size=UDim2.fromScale(1,1),Position=UDim2.fromOffset(24,0),BackgroundTransparency=1,ClipsDescendants=false,Parent=wrapper})
+local pet=New("ImageLabel",{Name="NotificationPet",Image="",Size=UDim2.fromOffset(90,90),Position=UDim2.new(0.75,0,0,52),AnchorPoint=Vector2.new(0.5,1),BackgroundTransparency=1,ScaleType="Fit",ImageTransparency=1,Active=false,ZIndex=0,Parent=mover})
+local card=New("CanvasGroup",{Name="NotificationCard",Position=UDim2.fromOffset(0,30),Size=UDim2.new(1,0,0,64),BackgroundTransparency=0.26,BorderSizePixel=0,GroupTransparency=1,ClipsDescendants=true,Active=false,ZIndex=1,Parent=mover})
+local stack=New("Frame",{Name="Content",Size=UDim2.new(1,-28,0,0),Position=UDim2.fromOffset(14,12),AutomaticSize="Y",BackgroundTransparency=1,ZIndex=2,Parent=card},{New("UIListLayout",{FillDirection="Vertical",SortOrder="LayoutOrder",Padding=UDim.new(0,5)})})
+local title=New("TextLabel",{Name="Title",Text=notice.Title,Size=UDim2.new(1,notice.CanClose and -20 or 0,0,0),AutomaticSize="Y",TextWrapped=true,TextXAlignment="Left",BackgroundTransparency=1,TextSize=16,FontFace=Font.new(UI.Font,Enum.FontWeight.SemiBold),LayoutOrder=1,ZIndex=3,Parent=stack})
+local body
+if notice.Content then body=New("TextLabel",{Name="Body",Text=tostring(notice.Content),Size=UDim2.new(1,0,0,0),AutomaticSize="Y",TextWrapped=true,TextXAlignment="Left",BackgroundTransparency=1,TextSize=14,TextTransparency=0.18,FontFace=Font.new(UI.Font,Enum.FontWeight.Regular),LayoutOrder=2,ZIndex=3,Parent=stack})end
+local actions={}
+if type(config.Buttons)=="table"and #config.Buttons>0 then
+local row=New("Frame",{Name="Actions",Size=UDim2.new(1,0,0,28),BackgroundTransparency=1,LayoutOrder=3,Parent=stack},{New("UIListLayout",{FillDirection="Horizontal",Padding=UDim.new(0,8),SortOrder="LayoutOrder"})})
+for order,entry in ipairs(config.Buttons)do
+local button=New("TextButton",{Text=entry.Title or"Open",Size=UDim2.new(1/#config.Buttons,-8,1,0),BorderSizePixel=0,BackgroundTransparency=0.86,TextSize=13,FontFace=Font.new(UI.Font,Enum.FontWeight.Medium),AutoButtonColor=false,LayoutOrder=order,ZIndex=3,Parent=row})
+actions[#actions+1]=button
+UI.AddSignal(button.Activated,function()if not notice.Closed then UI.SafeCallback(entry.Callback)end end)
 end
 end
-
+local separator=New("Frame",{Name="NotificationSeparator",Size=UDim2.new(1,-28,0,1),Position=UDim2.fromOffset(14,0),BorderSizePixel=0,BackgroundTransparency=0.91,Active=false,ZIndex=2,Parent=card})
+local duration=New("Frame",{Name="NotificationDuration",Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,1,-1),BorderSizePixel=0,BackgroundTransparency=0.58,Active=false,ZIndex=2,Parent=card})
+local closeButton
+if notice.CanClose then
+local data=UI.Icon("x")
+closeButton=New("ImageButton",{Name="Close",Size=UDim2.fromOffset(14,14),Position=UDim2.new(1,-14,0,14),AnchorPoint=Vector2.new(1,0),BackgroundTransparency=1,Image=type(data)=="table"and data[1]or data,ImageRectSize=type(data)=="table"and data[2].ImageRectSize or Vector2.new(0,0),ImageRectOffset=type(data)=="table"and data[2].ImageRectPosition or Vector2.new(0,0),ImageTransparency=0.4,AutoButtonColor=false,ZIndex=4,Parent=card})
+end
+notice.UIElements.Main=card
+notice.UIElements.Pet=pet
+notice.UIElements.Wrapper=wrapper
+notice.UIElements.Title=title
+notice.UIElements.Content=body
+local tweens={}
+local links={}
+local dead=false
+local timer
+local function animate(obj,time,properties)
+local motion=Tween(obj,time,properties,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+tweens[#tweens+1]=motion;motion:Play();return motion
+end
+local function color(key,fallback)
+local ok,value=pcall(UI.GetThemeProperty,key,UI.Theme)
+return ok and typeof(value)=="Color3"and value or fallback
+end
+local function refreshTheme()
+if dead then return end
+local text=color("Text",Color3.new(1,1,1))
+local base=color("Notification",Color3.fromRGB(18,22,31))
+card.BackgroundColor3=base
+card.BackgroundTransparency=UI.Theme and UI.Theme.Name=="Light"and 0.30 or 0.24
+title.TextColor3=text
+if body then body.TextColor3=text end
+separator.BackgroundColor3=text
+duration.BackgroundColor3=color("Button",Color3.fromRGB(77,107,254))
+if closeButton then closeButton.ImageColor3=text end
+for _,button in ipairs(actions)do button.TextColor3=text;button.BackgroundColor3=text end
+end
+local function measure()
+if dead or notice.Closed then return end
+local height=math.max(56,stack.UIListLayout.AbsoluteContentSize.Y+24)
+card.Size=UDim2.new(1,0,0,height)
+separator.Position=UDim2.new(0,14,1,-7)
+animate(wrapper,0.24,{Size=UDim2.new(1,0,0,height+30)})
+end
+local function cleanup()
+if dead then return end
+dead=true
+for _,link in ipairs(links)do link:Disconnect()end
+for _,motion in ipairs(tweens)do pcall(function()motion:Cancel()end)end
+if timer then timer:Cancel()end
+Module.Notifications[index]=nil
+end
+function notice.Close()
+if dead or notice.Closed then return end
+notice.Closed=true
+if timer then timer:Cancel();timer=nil end
+animate(card,0.22,{GroupTransparency=1})
+animate(pet,0.22,{ImageTransparency=1})
+animate(mover,0.28,{Position=UDim2.fromOffset(36,0)})
+local exit=animate(wrapper,0.3,{Size=UDim2.new(1,0,0,0)})
+local ended
+ended=exit.Completed:Connect(function(state)
+if state==Enum.PlaybackState.Completed then if ended then ended:Disconnect()end;wrapper:Destroy()end
+end)
+links[#links+1]=ended
+end
+links[#links+1]=wrapper.Destroying:Connect(cleanup)
+links[#links+1]=stack.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(measure)
+links[#links+1]=UI:OnThemeChange(refreshTheme)
+if closeButton then links[#links+1]=closeButton.Activated:Connect(notice.Close)end
+refreshTheme()
+task.defer(function()
+if dead or notice.Closed then return end
+measure()
+animate(card,0.34,{GroupTransparency=0})
+animate(mover,0.40,{Position=UDim2.fromOffset(0,0)})
+if type(notice.Duration)=="number"and notice.Duration>0 then
+timer=Tween(duration,notice.Duration,{Size=UDim2.new(0,0,0,1)},Enum.EasingStyle.Linear,Enum.EasingDirection.Out)
+links[#links+1]=timer.Completed:Connect(function(state)if state==Enum.PlaybackState.Completed then notice.Close()end end)
+timer:Play()
+end
+end)
 task.spawn(function()
-task.wait()
-e(
-u,
-0.45,
-{Size=UDim2.new(1,0,0,r.AbsoluteSize.Y)},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
-e(r,0.45,{Position=UDim2.new(0,0,1,0)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-if h.Duration then
-m.Size=UDim2.new(0,r.DurationFrame.AbsoluteSize.X,1,0)
-e(
-r.DurationFrame.Frame,
-h.Duration,
-{Size=UDim2.new(0,0,1,0)},
-Enum.EasingStyle.Linear,
-Enum.EasingDirection.InOut
-):Play()
-task.wait(h.Duration)
-h:Close()
+if UI.LoadNotificationPet then
+local ok,image=pcall(UI.LoadNotificationPet)
+if ok and type(image)=="string"and not dead and not notice.Closed then pet.Image=image;animate(pet,0.36,{ImageTransparency=0})end
 end
 end)
-
-if l then
-b.AddSignal(l.TextButton.MouseButton1Click,function()
-h:Close()
-end)
+return notice
 end
-
-
-return h
-end
-
-return f end function a.g()
+return Module
+end function a.g()
 
 
 
@@ -4093,6 +3904,14 @@ Icon=Color3.fromHex"#8DA2CC",
 Toggle=Color3.fromHex"#4D6BFE",
 Slider=Color3.fromHex"#4D6BFE",
 Checkbox=Color3.fromHex"#4D6BFE",
+ResizeHandle=Color3.fromHex"#C5D8FF",
+Notification=Color3.fromHex"#12161F",
+Notification2=Color3.fromHex"#12161F",
+Notification2Transparency=1,
+NotificationTitle=Color3.new(1,1,1),
+NotificationContent=Color3.new(1,1,1),
+NotificationTitleTransparency=0,
+NotificationContentTransparency=0.25,
 
 PanelBackground=Color3.fromHex"#FFFFFF",
 PanelBackgroundTransparency=0.955,
@@ -4121,24 +3940,32 @@ Icon=Color3.fromHex"#46598C",
 Toggle=Color3.fromHex"#4D6BFE",
 Slider=Color3.fromHex"#4D6BFE",
 Checkbox=Color3.fromHex"#4D6BFE",
+ResizeHandle=Color3.new(1,1,1),
+Notification=Color3.fromHex"#FFFFFF",
+Notification2=Color3.fromHex"#FFFFFF",
+Notification2Transparency=1,
+NotificationTitle=Color3.fromHex"#0E1526",
+NotificationContent=Color3.fromHex"#0E1526",
+NotificationTitleTransparency=0,
+NotificationContentTransparency=0.25,
 
 DropdownTabBackground=Color3.fromHex"#DCE5FF",
 DropdownBackground=Color3.fromHex"#FFFFFF",
 
 TabBackground=Color3.fromHex"#FFFFFF",
-TabBackgroundHover=Color3.fromHex"#F1F5FF",
-TabBackgroundHoverTransparency=0,
-TabBackgroundActive=Color3.fromHex"#E4EBFF",
-TabBackgroundActiveTransparency=0,
+TabBackgroundHover=Color3.fromHex"#E8EFFF",
+TabBackgroundHoverTransparency=0.62,
+TabBackgroundActive=Color3.fromHex"#D7E3FF",
+TabBackgroundActiveTransparency=0.58,
 
-PanelBackground=Color3.fromHex"#F3F7FF",
-PanelBackgroundTransparency=0,
+PanelBackground=Color3.fromHex"#EAF1FF",
+PanelBackgroundTransparency=0.72,
 
 LabelBackground=Color3.fromHex"#F3F7FF",
-LabelBackgroundTransparency=0,
+LabelBackgroundTransparency=0.72,
 
 ElementBackground=Color3.fromHex"#FFFFFF",
-ElementBackgroundTransparency=0,
+ElementBackgroundTransparency=0.66,
 },
 
 Rose={
@@ -4696,174 +4523,63 @@ return ak
 end
 
 return aa end function a.y()
-
-local aa={}
-
-local ab=a.load'd'
-local ac=ab.New
-local ad=ab.Tween
-
-function aa.New(ae,af,ag)
-local ah={
-Title=af.Title or"Tag",
-Icon=af.Icon,
-Color=af.Color or Color3.fromHex"#315dff",
-Radius=af.Radius or 999,
-Border=af.Border or false,
-
-TagFrame=nil,
-Height=26,
-Padding=10,
-TextSize=14,
-IconSize=16,
-}
-
-local ai
-if ah.Icon then
-ai=ab.Image(ah.Icon,ah.Icon,0,af.Window,"Tag",false)
-
-ai.Size=UDim2.new(0,ah.IconSize,0,ah.IconSize)
-ai.ImageLabel.ImageColor3=typeof(ah.Color)=="Color3"
-and ab.GetTextColorForHSB(ah.Color)
-or typeof(ah.Color)=="string"
-and(ab.GetTextColorForHSB(ab.GetThemeProperty(ah.Color,ab.Theme)))
+local UI=a.load'd'
+local New=UI.New
+local Module={}
+function Module.New(_,config,parent)
+local tag={Title=config.Title==nil and"Tag"or tostring(config.Title),Icon=config.Icon,Color=config.Color or Color3.fromHex("#315dff"),Height=config.Height or 30,IconSize=config.IconSize or 16,Padding=config.Padding or 10,TextSize=config.TextSize or 14,UIElements={}}
+local pureImage=tag.Icon and tag.Title==""
+local width=config.IconWidth or(pureImage and 156 or tag.IconSize)
+local height=config.IconHeight or(pureImage and 25 or tag.IconSize)
+local root=UI.NewRoundFrame(0,"Squircle",{Name="Tag",Size=UDim2.fromOffset(pureImage and width+16 or 0,tag.Height),AutomaticSize=pureImage and"None"or"X",ImageColor3=typeof(tag.Color)=="Color3"and tag.Color or nil,ImageTransparency=pureImage and 1 or 0.08,BackgroundTransparency=1,Parent=parent,Active=false,ThemeTag=typeof(tag.Color)=="string"and{ImageColor3=tag.Color}or nil})
+local content=New("Frame",{Name="Content",Size=pureImage and UDim2.fromScale(1,1)or UDim2.new(0,0,1,0),AutomaticSize=pureImage and"None"or"X",BackgroundTransparency=1,Active=false,Parent=root})
+local layout
+if not pureImage then
+layout=New("UIListLayout",{FillDirection="Horizontal",VerticalAlignment="Center",HorizontalAlignment="Center",Padding=UDim.new(0,7),SortOrder="LayoutOrder",Parent=content})
+New("UIPadding",{PaddingLeft=UDim.new(0,tag.Padding),PaddingRight=UDim.new(0,tag.Padding),Parent=content})
 end
-
-local aj=ac("TextLabel",{
-BackgroundTransparency=1,
-AutomaticSize="XY",
-TextSize=ah.TextSize,
-FontFace=Font.new(ab.Font,Enum.FontWeight.SemiBold),
-Text=ah.Title,
-TextColor3=typeof(ah.Color)=="Color3"and ab.GetTextColorForHSB(ah.Color)or typeof(
-ah.Color
-)=="string"and(ab.GetTextColorForHSB(ab.GetThemeProperty(ah.Color,ab.Theme))),
-})
-
-local ak
-
-if typeof(ah.Color)=="table"then
-ak=ac"UIGradient"
-for al,am in next,ah.Color do
-ak[al]=am
+local label=New("TextLabel",{Name="Title",Text=tag.Title,TextSize=tag.TextSize,AutomaticSize="XY",BackgroundTransparency=1,Visible=tag.Title~="",FontFace=Font.new(UI.Font,Enum.FontWeight.SemiBold),LayoutOrder=2,Active=false,Parent=content})
+local icon
+local function applyColor()
+local color=tag.Color
+if typeof(color)=="string"then color=UI.GetThemeProperty(color,UI.Theme)end
+if typeof(color)~="Color3"then color=Color3.fromRGB(49,93,255)end
+root.ImageColor3=color
+label.TextColor3=UI.GetTextColorForHSB(color)
+if icon then for _,image in ipairs(icon:GetDescendants())do if image:IsA("ImageLabel")then image.ImageColor3=pureImage and Color3.new(1,1,1)or label.TextColor3 end end end
 end
-
-aj.TextColor3=ab.GetTextColorForHSB(ab.GetAverageColor(ak))
-if ai then
-ai.ImageLabel.ImageColor3=ab.GetTextColorForHSB(ab.GetAverageColor(ak))
+function tag.SetIcon(_,value)
+tag.Icon=value
+if icon then icon:Destroy();icon=nil end
+if value then
+icon=UI.Image(value,tostring(value),0,config.Window and config.Window.Folder or"DeepSeekUI","Tag",false)
+icon.Name="TagIcon"
+icon.Size=UDim2.fromOffset(width,height)
+icon.LayoutOrder=1
+icon.Active=false
+if pureImage then icon.AnchorPoint=Vector2.new(0.5,0.5);icon.Position=UDim2.fromScale(0.5,0.5)end
+icon.Parent=content
+for _,image in ipairs(icon:GetDescendants())do
+if image:IsA("ImageLabel")then image.ScaleType=Enum.ScaleType.Fit;image.Active=false end
 end
 end
-
-local al=ab.NewRoundFrame(ah.Radius,"Squircle",{
-AutomaticSize="X",
-Size=UDim2.new(0,0,0,ah.Height),
-Parent=ag,
-ImageColor3=typeof(ah.Color)=="Color3"and ah.Color
-or typeof(ah.Color)=="table"and Color3.new(1,1,1)
-or nil,
-ThemeTag=typeof(ah.Color)=="string"and{
-ImageColor3=ah.Color,
-},
-},{
-ak,
-ab.NewRoundFrame(ah.Radius+1,"SquircleGlass",{
-Size=UDim2.new(1,1,1,1),
-AnchorPoint=Vector2.new(0.5,0.5),
-Position=UDim2.new(0.5,0,0.5,0),
-ThemeTag={
-ImageColor3="White",
-},
-ImageTransparency=0.75,
-}),
-ac("Frame",{
-Size=UDim2.new(0,0,1,0),
-AutomaticSize="X",
-Name="Content",
-BackgroundTransparency=1,
-},{
-ai,
-aj,
-ac("UIPadding",{
-PaddingLeft=UDim.new(0,ah.Padding),
-PaddingRight=UDim.new(0,ah.Padding),
-}),
-ac("UIListLayout",{
-FillDirection="Horizontal",
-VerticalAlignment="Center",
-Padding=UDim.new(0,ah.Padding/1.5),
-}),
-}),
-})
-
-function ah.SetTitle(am,an)
-ah.Title=an
-aj.Text=an
-
-return ah
+tag.UIElements.Icon=icon
+applyColor()
+return tag
 end
-
-function ah.SetColor(am,an)
-ah.Color=an
-if typeof(an)=="table"then
-local ao=ab.GetAverageColor(an)
-ad(aj,0.06,{TextColor3=ab.GetTextColorForHSB(ao)}):Play()
-local ap=al:FindFirstChildOfClass"UIGradient"or ac("UIGradient",{Parent=al})
-for aq,ar in next,an do
-ap[aq]=ar
+function tag.SetTitle(_,value)tag.Title=tostring(value or"");label.Text=tag.Title;label.Visible=tag.Title~="";return tag end
+function tag.SetColor(_,value)tag.Color=value;applyColor();return tag end
+function tag.Destroy()root:Destroy();return tag end
+tag.TagFrame=root
+tag.UIElements.Main=root
+tag.UIElements.Content=content
+tag.UIElements.Title=label
+tag:SetIcon(tag.Icon)
+UI:OnThemeChange(function()if root.Parent then applyColor()end end)
+return tag
 end
-ad(al,0.06,{ImageColor3=Color3.new(1,1,1)}):Play()
-else
-if ak then
-ak:Destroy()
-end
-ad(aj,0.06,{TextColor3=ab.GetTextColorForHSB(an)}):Play()
-if ai then
-ad(ai.ImageLabel,0.06,{ImageColor3=ab.GetTextColorForHSB(an)}):Play()
-end
-ad(al,0.06,{ImageColor3=an}):Play()
-end
-
-return ah
-end
-
-function ah.SetIcon(am,an)
-ah.Icon=an
-
-if an then
-ai=ab.Image(an,an,0,af.Window,"Tag",false)
-
-ai.Size=UDim2.new(0,ah.IconSize,0,ah.IconSize)
-ai.Parent=al
-
-if typeof(ah.Color)=="Color3"then
-ai.ImageLabel.ImageColor3=ab.GetTextColorForHSB(ah.Color)
-elseif typeof(ah.Color)=="table"then
-ai.ImageLabel.ImageColor3=ab.GetTextColorForHSB(ab.GetAverageColor(ak))
-end
-else
-if ai then
-ai:Destroy()
-ai=nil
-end
-end
-return ah
-end
-
-function ah.Destroy(am)
-al:Destroy()
-return ah
-end
-
-ab:OnThemeChange(function(am,an)
-aj.TextColor3=ab.GetTextColorForHSB(ab.GetThemeProperty(ah.Color,ab.Theme))
-ai.ImageLabel.ImageColor3=
-ab.GetTextColorForHSB(ab.GetThemeProperty(ah.Color,ab.Theme))
-end)
-
-return ah
-end
-
-return aa end function a.z()
+return Module
+end function a.z()
 
 local aa=(cloneref or clonereference or function(aa)return aa end)
 
@@ -6143,6 +5859,13 @@ PaddingBottom=UDim.new(0,ah.UIPadding),
 },true,true)
 
 ah.UIElements.Main=d
+ah.UIElements.ControlRow=d
+d:SetAttribute("DSControl",true)
+if ag.ElementTable then
+d:SetAttribute("DSControlType",ag.ElementTable.__type or "Element")
+ag.ElementTable.UIElements=ag.ElementTable.UIElements or{}
+ag.ElementTable.UIElements.ControlRow=d
+end
 ah.UIElements.Locked=av
 
 if ah.Hover then
@@ -6503,8 +6226,8 @@ Window=ae.Window,
 Color=af.Color,
 Justify=af.Justify,
 TextOffset=20,
-Hover=true,
-Scalable=true,
+Hover=false,
+Scalable=false,
 Tab=ae.Tab,
 Index=ae.Index,
 ElementTable=af,
@@ -6564,11 +6287,33 @@ if af.Locked then
 af:Lock()
 end
 
-aa.AddSignal(af.ButtonFrame.UIElements.Main.MouseButton1Click,function()
+local dsButton=af.ButtonFrame.UIElements.Main
+local dsSweep=ab("Frame",{
+Name="DeepSeekButtonSweep",Size=UDim2.fromScale(1,1),BackgroundColor3=Color3.new(1,1,1),
+BackgroundTransparency=1,BorderSizePixel=0,Active=false,ZIndex=20,Parent=dsButton,
+})
+local dsGradient=ab("UIGradient",{
+Color=ColorSequence.new(Color3.fromRGB(90,135,255),Color3.new(1,1,1)),
+Transparency=NumberSequence.new{NumberSequenceKeypoint.new(0,1),NumberSequenceKeypoint.new(0.35,1),NumberSequenceKeypoint.new(0.5,0.15),NumberSequenceKeypoint.new(0.65,1),NumberSequenceKeypoint.new(1,1)},
+Offset=Vector2.new(-1,0),Parent=dsSweep,
+})
+local dsClickSeq=0
+local dsSweepTween
+local dsFadeTween
+aa.AddSignal(dsButton.Activated,function()
 if ag then
-task.spawn(function()
-aa.SafeCallback(af.Callback)
+dsClickSeq=dsClickSeq+1
+local seq=dsClickSeq
+if dsSweepTween then dsSweepTween:Cancel()end
+if dsFadeTween then dsFadeTween:Cancel()end
+dsGradient.Offset=Vector2.new(-1,0)
+dsSweep.BackgroundTransparency=0.42
+dsSweepTween=aa.Tween(dsGradient,0.82,{Offset=Vector2.new(1,0)},Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
+dsSweepTween:Play()
+task.delay(0.70,function()
+if dsSweep.Parent and dsClickSeq==seq then dsFadeTween=aa.Tween(dsSweep,0.22,{BackgroundTransparency=1});dsFadeTween:Play()end
 end)
+task.spawn(function()aa.SafeCallback(af.Callback)end)
 end
 end)
 return af.__type,af
@@ -6979,6 +6724,7 @@ end)
 end
 end
 
+if ab.RegisterVisualInertia then ab.RegisterVisualInertia(aq.Frame.Bar,"toggle")end
 return ap,am
 end
 
@@ -7227,431 +6973,393 @@ return ai.__type,ai
 end
 
 return af end function a.I()
+local clone=cloneref or clonereference or function(value)return value end
+local Input=clone(game:GetService"UserInputService")
+local GuiService=clone(game:GetService"GuiService")
+local UI=a.load'd'
+local New=UI.New
+local Module={}
+local keyboardOwner
+local dragOwner
 
-local aa=(cloneref or clonereference or function(aa)
-return aa
-end)
+local function finite(value)
+local number=tonumber(value)
+if number and number==number and math.abs(number)<math.huge then return number end
+end
+local function formatValue(value)
+if value%1==0 then return string.format("%.0f",value)end
+local text=string.format("%.10f",value):gsub("0+$",""):gsub("%.$","")
+return text=="-0"and"0"or text
+end
 
-local ac=aa(game:GetService"UserInputService")
-local ad=aa(game:GetService"RunService")
-
-local ae=a.load'd'
-local af=ae.New
-local ag=ae.Tween
-
-local ah={}
-
-local ai=false
-
-function ah.New(aj,ak)
-local al={
+function Module.New(_,config)
+local values=type(config.Value)=="table"and config.Value or{}
+local minimum=finite(values.Min)or finite(config.Min)or 0
+local maximum=finite(values.Max)or finite(config.Max)or 100
+if minimum>maximum then minimum,maximum=maximum,minimum end
+values.Min=minimum
+values.Max=maximum
+local slider={
 __type="Slider",
-Title=ak.Title or nil,
-Desc=ak.Desc or nil,
-Locked=ak.Locked or nil,
-LockedTitle=ak.LockedTitle,
-Value=ak.Value or{},
-Icons=ak.Icons or nil,
-IsTooltip=ak.IsTooltip or false,
-IsTextbox=ak.IsTextbox,
-Step=ak.Step or 1,
-Callback=ak.Callback or function()end,
+Title=config.Title,
+Desc=config.Desc,
+Locked=config.Locked==true,
+LockedTitle=config.LockedTitle,
+Value=values,
+Icons=config.Icons,
+IsTooltip=config.IsTooltip==true,
+IsTextbox=config.IsTextbox~=false,
+Step=math.abs(finite(config.Step)or 1),
+Callback=config.Callback or function()end,
 UIElements={},
 IsFocusing=false,
-
-Width=ak.Width or 130,
-TextBoxWidth=ak.Window.NewElements and 40 or 30,
-ThumbSize=13,
+Width=math.max(finite(config.Width)or 190,0),
+TextBoxWidth=48,
+ThumbSize=14,
 IconSize=26,
 }
-if al.Icons=={}then
-al.Icons={
-From="sfsymbols:sunMinFill",
-To="sfsymbols:sunMaxFill",
-}
+if slider.Step==0 then slider.Step=1 end
+local destroyed=false
+local connections={}
+local dragInput
+local dragTouch=false
+local scrollingFrame
+local previousScrolling
+local tooltip
+local current
+local inputId=config.WindUI.GenerateGUID()
+local function connect(signal,callback)
+local connection=UI.AddSignal(signal,callback)
+connections[#connections+1]=connection
+return connection
 end
-if al.IsTextbox==nil and al.Title==nil then
-al.IsTextbox=false
-else
-al.IsTextbox=al.IsTextbox~=false
+local function normalize(value)
+value=math.clamp(value,slider.Value.Min,slider.Value.Max)
+if value==slider.Value.Min or value==slider.Value.Max then return value end
+local quotient=value/slider.Step
+if quotient==quotient and math.abs(quotient)<math.huge then
+value=math.floor(quotient+0.5)*slider.Step
 end
-
-local am
-local an
-local ao
-local ap=al.Value.Default or al.Value.Min or 0
-
-local aq=ap
-local ar=(ap-(al.Value.Min or 0))/((al.Value.Max or 100)-(al.Value.Min or 0))
-
-local as=true
-local at=al.Step%1~=0
-
-local function FormatValue(au)
-if at then
-return tonumber(string.format("%.2f",au))
+return math.clamp(value,slider.Value.Min,slider.Value.Max)
 end
-return math.floor(au+0.5)
+current=normalize(finite(values.Default)or finite(config.Default)or minimum)
+values.Default=current
+local fromIcon
+local toIcon
+if type(slider.Icons)=="table"then
+local from=slider.Icons.From
+local to=slider.Icons.To
+if not next(slider.Icons)then
+from="sfsymbols:sunMinFill"
+to="sfsymbols:sunMaxFill"
 end
-
-local function CalculateValue(au)
-if at then
-return math.floor(au/al.Step+0.5)*al.Step
-else
-return math.floor(au/al.Step+0.5)*al.Step
+if from then
+fromIcon=UI.Image(from,from,0,config.Window.Folder,"SliderIconFrom",true,true,"SliderIconFrom")
 end
-end
-
-local au,av
-local aw=32
-if al.Icons then
-if al.Icons.From then
-au=ae.Image(
-al.Icons.From,
-al.Icons.From,
-0,
-ak.Window.Folder,
-"SliderIconFrom",
-true,
-true,
-"SliderIconFrom"
-)
-au.Size=UDim2.new(0,al.IconSize,0,al.IconSize)
-aw=aw+al.IconSize-2
-end
-if al.Icons.To then
-av=ae.Image(
-al.Icons.To,
-al.Icons.To,
-0,
-ak.Window.Folder,
-"SliderIconTo",
-true,
-true,
-"SliderIconTo"
-)
-av.Size=UDim2.new(0,al.IconSize,0,al.IconSize)
-aw=aw+al.IconSize-2
+if to then
+toIcon=UI.Image(to,to,0,config.Window.Folder,"SliderIconTo",true,true,"SliderIconTo")
 end
 end
-al.SliderFrame=a.load'C'{
-Title=al.Title,
-Desc=al.Desc,
-Parent=ak.Parent,
-TextOffset=al.Width,
+local fromSpace=fromIcon and slider.IconSize+8 or 0
+local toSpace=toIcon and slider.IconSize+8 or 0
+slider.TextBoxWidth=math.max(48,math.min(96,math.max(#formatValue(minimum),#formatValue(maximum),#formatValue(current))*10+8))
+slider.Width=math.max(slider.Width,fromSpace+toSpace+slider.TextBoxWidth+12+54)
+slider.SliderFrame=a.load'C'{
+Title=slider.Title,
+Desc=slider.Desc,
+Parent=config.Parent,
+TextOffset=slider.Title and slider.Width+12 or 0,
 Hover=false,
-Tab=ak.Tab,
-Index=ak.Index,
-Window=ak.Window,
-ElementTable=al,
-ParentConfig=ak,
-Tags=ak.Tags,
+Tab=config.Tab,
+Index=config.Index,
+Window=config.Window,
+ElementTable=slider,
+ParentConfig=config,
+Tags=config.Tags,
 }
-
-al.UIElements.SliderIcon=ae.NewRoundFrame(99,"Squircle",{
-ImageTransparency=0.95,
-Size=UDim2.new(1,not al.IsTextbox and-aw or(-al.TextBoxWidth-8),0,4),
-AnchorPoint=Vector2.new(0.5,0.5),
-Position=UDim2.new(0.5,0,0.5,0),
-Name="Frame",
-ThemeTag={
-ImageColor3="Text",
-},
-},{
-ae.NewRoundFrame(99,"Squircle",{
-Name="Frame",
-Size=UDim2.new(ar,0,1,0),
-ImageTransparency=0.1,
-ThemeTag={
-ImageColor3="Slider",
-},
-},{
-ae.NewRoundFrame(99,"Squircle",{
-Size=UDim2.new(
-0,
-ak.Window.NewElements and(al.ThumbSize*2)or(al.ThumbSize+2),
-0,
-ak.Window.NewElements and(al.ThumbSize+4)or(al.ThumbSize+2)
-),
+local row=slider.SliderFrame.UIElements.Main
+slider.ElementFrame=row
+slider.UIElements.ControlRow=row
+row:SetAttribute("DSControl",true)
+local wrapperContent=slider.SliderFrame.UIElements.Container
+wrapperContent.Size=UDim2.new(1,0,0,34)
+wrapperContent.AutomaticSize="Y"
+local container=New("Frame",{
+Name="SliderContainer",
+Size=UDim2.new(slider.Title and 0 or 1,slider.Title and slider.Width or 0,0,34),
 Position=UDim2.new(1,0,0.5,0),
-AnchorPoint=Vector2.new(0.5,0.5),
-ThemeTag={
-ImageColor3="SliderThumb",
-},
-Name="Thumb",
-},{
-ae.NewRoundFrame(999,"SquircleGlass",{
-Size=UDim2.new(1,0,1,0),
-ImageColor3=Color3.new(1,1,1),
-Name="Highlight",
-ImageTransparency=0.5,
-}),
-}),
-}),
-})
-
-al.UIElements.SliderContainer=af("Frame",{
-Size=UDim2.new(al.Title==nil and 1 or 0,al.Title==nil and 0 or al.Width,0,0),
-AutomaticSize="Y",
-Position=UDim2.new(1,al.IsTextbox and(ak.Window.NewElements and-16 or 0)or 0,0.5,0),
 AnchorPoint=Vector2.new(1,0.5),
 BackgroundTransparency=1,
-Parent=al.SliderFrame.UIElements.Main,
-},{
-af("UIListLayout",{
-Padding=UDim.new(0,al.Title~=nil and 8 or 12),
-FillDirection="Horizontal",
-VerticalAlignment="Center",
-HorizontalAlignment=al.Icons
-and(al.Icons.From and(al.Icons.To and"Center"or"Left")or al.Icons.To and"Right")
-or"Center",
-}),
-au,
-al.UIElements.SliderIcon,
-av,
-af("TextBox",{
-Size=UDim2.new(0,al.TextBoxWidth,0,0),
-TextXAlignment="Left",
-Text=FormatValue(ap),
-ThemeTag={
-TextColor3="Text",
-},
-TextTransparency=0.4,
-AutomaticSize="Y",
-TextSize=15,
-FontFace=Font.new(ae.Font,Enum.FontWeight.Medium),
-BackgroundTransparency=1,
-LayoutOrder=-1,
-Visible=al.IsTextbox,
-}),
+Parent=row,
 })
-
-local ax
-if al.IsTooltip then
-ax=a.load'B'.New(
-ap,
-al.UIElements.SliderIcon.Frame.Thumb,
-true,
-"Secondary",
-"Small",
-false
-)
-ax.Container.AnchorPoint=Vector2.new(0.5,1)
-ax.Container.Position=UDim2.new(0.5,0,0,-8)
+if fromIcon then
+fromIcon.Size=UDim2.new(0,slider.IconSize,0,slider.IconSize)
+fromIcon.AnchorPoint=Vector2.new(0,0.5)
+fromIcon.Position=UDim2.new(0,0,0.5,0)
+fromIcon.Parent=container
+end
+if toIcon then
+toIcon.Size=UDim2.new(0,slider.IconSize,0,slider.IconSize)
+toIcon.AnchorPoint=Vector2.new(1,0.5)
+toIcon.Position=UDim2.new(1,0,0.5,0)
+toIcon.Parent=container
+end
+local valueBox=New("TextBox",{
+Name="TextBox",
+Size=UDim2.new(0,slider.TextBoxWidth,0,30),
+Position=UDim2.new(0,fromSpace,0.5,0),
+AnchorPoint=Vector2.new(0,0.5),
+Text=formatValue(current),
+TextSize=18,
+TextXAlignment="Right",
+TextYAlignment="Center",
+TextWrapped=false,
+TextEditable=slider.IsTextbox and not slider.Locked,
+ClearTextOnFocus=false,
+MultiLine=false,
+FontFace=Font.new(UI.Font,Enum.FontWeight.Medium),
+BackgroundTransparency=1,
+Parent=container,
+ThemeTag={TextColor3="Text"},
+})
+local railLeft=fromSpace+slider.TextBoxWidth+12
+local hit=New("TextButton",{
+Name="SliderInput",
+Size=UDim2.new(1,-railLeft-toSpace,1,0),
+Position=UDim2.new(0,railLeft,0,0),
+BackgroundTransparency=1,
+Text="",
+AutoButtonColor=false,
+Active=true,
+Selectable=true,
+Parent=container,
+})
+hit.SelectionImageObject=New("Frame",{
+Name="SliderSelection",
+Size=UDim2.new(1,0,1,0),
+BackgroundTransparency=1,
+})
+local track=New("Frame",{
+Name="Track",
+Size=UDim2.new(1,-slider.ThumbSize,0,6),
+Position=UDim2.new(0,slider.ThumbSize/2,0.5,0),
+AnchorPoint=Vector2.new(0,0.5),
+BorderSizePixel=0,
+BackgroundTransparency=0.86,
+Parent=hit,
+ThemeTag={BackgroundColor3="Text"},
+})
+local fill=New("Frame",{
+Name="Frame",
+Size=UDim2.new(0,0,1,0),
+BorderSizePixel=0,
+BackgroundTransparency=0,
+Parent=track,
+ThemeTag={BackgroundColor3="Slider"},
+})
+local thumb=New("Frame",{
+Name="Thumb",
+Size=UDim2.new(0,slider.ThumbSize,0,slider.ThumbSize),
+Position=UDim2.new(1,0,0.5,0),
+AnchorPoint=Vector2.new(0.5,0.5),
+BorderSizePixel=0,
+BackgroundTransparency=0,
+Parent=fill,
+ThemeTag={BackgroundColor3="SliderThumb"},
+})
+slider.UIElements.SliderContainer=container
+slider.UIElements.SliderIcon=track
+slider.UIElements.Track=track
+slider.UIElements.Fill=fill
+slider.UIElements.Thumb=thumb
+if UI.RegisterVisualInertia then UI.RegisterVisualInertia(thumb,"slider")end
+slider.UIElements.Value=valueBox
+slider.UIElements.Input=hit
+slider.UIElements.SliderIconFrom=fromIcon
+slider.UIElements.SliderIconTo=toIcon
+if slider.IsTooltip then
+tooltip=a.load'B'.New(formatValue(current),thumb,true,"Secondary","Small",false)
+tooltip.Container.AnchorPoint=Vector2.new(0.5,1)
+tooltip.Container.Position=UDim2.new(0.5,0,0,-8)
 end
 
-function al.Lock(ay)
-al.Locked=true
-as=false
-return al.SliderFrame:Lock(al.LockedTitle)
+local function draw(forceText)
+local span=slider.Value.Max-slider.Value.Min
+local ratio=span>0 and math.clamp((current-slider.Value.Min)/span,0,1)or 0
+fill.Size=UDim2.new(ratio,0,1,0)
+if forceText or not slider.IsFocusing then valueBox.Text=formatValue(current)end
+if tooltip then tooltip.TitleFrame.Text=formatValue(current)end
 end
-function al.Unlock(ay)
-al.Locked=false
-as=true
-return al.SliderFrame:Unlock()
+local function apply(value,forceText)
+local number=finite(value)
+if not number then draw(forceText)return end
+local nextValue=normalize(number)
+local changed=nextValue~=current
+current=nextValue
+slider.Value.Default=current
+draw(forceText)
+if changed then UI.SafeCallback(slider.Callback,current)end
+end
+local function stopDrag()
+if not dragInput then return end
+dragInput=nil
+if dragOwner==slider then dragOwner=nil end
+if scrollingFrame then
+local savedFrame=scrollingFrame
+local savedValue=previousScrolling
+scrollingFrame=nil
+previousScrolling=nil
+pcall(function()savedFrame.ScrollingEnabled=savedValue end)
+end
+if config.WindUI.CurrentInput==inputId then config.WindUI.CurrentInput=nil end
+if tooltip then tooltip:Close(false)end
+end
+local function setFromX(x)
+local width=track.AbsoluteSize.X
+if width<=0 then return end
+local ratio=math.clamp((x-track.AbsolutePosition.X)/width,0,1)
+apply(slider.Value.Min+ratio*(slider.Value.Max-slider.Value.Min),true)
+end
+local function beginDrag(input)
+if destroyed or slider.Locked or slider.IsFocusing or dragInput or dragOwner then return end
+local inputType=input.UserInputType
+if inputType~=Enum.UserInputType.MouseButton1 and inputType~=Enum.UserInputType.Touch then return end
+if config.WindUI.CurrentInput and config.WindUI.CurrentInput~=inputId then return end
+keyboardOwner=slider
+dragInput=input
+dragTouch=inputType==Enum.UserInputType.Touch
+dragOwner=slider
+config.WindUI.CurrentInput=inputId
+local tabFrame=config.Tab and config.Tab.UIElements and config.Tab.UIElements.ContainerFrame
+if tabFrame and tabFrame:IsA("ScrollingFrame")then
+scrollingFrame=tabFrame
+previousScrolling=tabFrame.ScrollingEnabled
+tabFrame.ScrollingEnabled=false
+end
+if tooltip then tooltip:Open()end
+setFromX(input.Position.X)
 end
 
-if al.Locked then
-al:Lock()
+function slider.Set(_,value,input)
+if destroyed or slider.Locked then return slider end
+if input then beginDrag(input)else apply(value,true)end
+return slider
+end
+function slider.SetMin(_,value)
+if destroyed then return slider end
+local number=finite(value)
+if not number then return slider end
+slider.Value.Min=number
+slider.Value.Max=math.max(slider.Value.Max,number)
+apply(current,true)
+return slider
+end
+function slider.SetMax(_,value)
+if destroyed then return slider end
+local number=finite(value)
+if not number then return slider end
+slider.Value.Max=number
+slider.Value.Min=math.min(slider.Value.Min,number)
+apply(current,true)
+return slider
+end
+function slider.Lock(_,title)
+if destroyed then return slider end
+slider.Locked=true
+if title~=nil then slider.LockedTitle=title end
+stopDrag()
+if keyboardOwner==slider then keyboardOwner=nil end
+valueBox.TextEditable=false
+if slider.IsFocusing then valueBox:ReleaseFocus()end
+slider.IsFocusing=false
+draw(true)
+slider.SliderFrame:Lock(slider.LockedTitle)
+return slider
+end
+function slider.Unlock()
+if destroyed then return slider end
+slider.Locked=false
+valueBox.TextEditable=slider.IsTextbox
+slider.SliderFrame:Unlock()
+return slider
+end
+local function cleanup()
+if destroyed then return end
+stopDrag()
+destroyed=true
+if keyboardOwner==slider then keyboardOwner=nil end
+for _,connection in ipairs(connections)do connection:Disconnect()end
+connections={}
+local selection=hit.SelectionImageObject
+if selection then selection:Destroy()end
+end
+function slider.Destroy()
+if destroyed then return end
+cleanup()
+slider.SliderFrame:Destroy()
 end
 
-
-local ay=ak.Tab.UIElements.ContainerFrame
-
-function al.Set(az,aA,aB)
-if as then
-if
-not al.IsFocusing
-and not ai
-and(
-not aB
-or(
-aB.UserInputType==Enum.UserInputType.MouseButton1
-or aB.UserInputType==Enum.UserInputType.Touch
-)
-)
-then
-if aB then
-am=(aB.UserInputType==Enum.UserInputType.Touch)
-ay.ScrollingEnabled=false
-ai=true
-
-local b=am and aB.Position.X or ac:GetMouseLocation().X
-local d=math.clamp(
-(b-al.UIElements.SliderIcon.AbsolutePosition.X)
-/al.UIElements.SliderIcon.AbsoluteSize.X,
-0,
-1
-)
-aA=CalculateValue(al.Value.Min+d*(al.Value.Max-al.Value.Min))
-aA=math.clamp(aA,al.Value.Min or 0,al.Value.Max or 100)
-
-if aA~=aq then
-ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(d,0,1,0)}):Play()
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then
-ax.TitleFrame.Text=FormatValue(aA)
-end
-al.Value.Default=FormatValue(aA)
-aq=aA
-ae.SafeCallback(al.Callback,FormatValue(aA))
-end
-
-an=ad.RenderStepped:Connect(function()
-local f=am and aB.Position.X or ac:GetMouseLocation().X
-local g=math.clamp(
-(f-al.UIElements.SliderIcon.AbsolutePosition.X)
-/al.UIElements.SliderIcon.AbsoluteSize.X,
-0,
-1
-)
-aA=CalculateValue(al.Value.Min+g*(al.Value.Max-al.Value.Min))
-
-if aA~=aq then
-ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(g,0,1,0)}):Play()
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then
-ax.TitleFrame.Text=FormatValue(aA)
-end
-al.Value.Default=FormatValue(aA)
-aq=aA
-ae.SafeCallback(al.Callback,FormatValue(aA))
+connect(row.Destroying,cleanup)
+connect(hit.InputBegan,beginDrag)
+connect(hit.SelectionGained,function()keyboardOwner=slider end)
+connect(hit.SelectionLost,function()if keyboardOwner==slider then keyboardOwner=nil end end)
+connect(valueBox.Focused,function()
+if slider.Locked or not slider.IsTextbox then valueBox:ReleaseFocus()return end
+stopDrag()
+keyboardOwner=slider
+slider.IsFocusing=true
+end)
+connect(valueBox.FocusLost,function()
+slider.IsFocusing=false
+if slider.Locked then draw(true)else apply(valueBox.Text,true)end
+end)
+connect(Input.InputChanged,function(input)
+if not dragInput or destroyed then return end
+if dragTouch then
+if input==dragInput then setFromX(input.Position.X)end
+elseif input.UserInputType==Enum.UserInputType.MouseMovement then
+setFromX(input.Position.X)
 end
 end)
-
-
-ao=ac.InputEnded:Connect(function(f)
-if
-(
-f.UserInputType==Enum.UserInputType.MouseButton1
-or f.UserInputType==Enum.UserInputType.Touch
-)and aB==f
-then
-an:Disconnect()
-ao:Disconnect()
-ai=false
-ay.ScrollingEnabled=true
-
-ak.WindUI.CurrentInput=nil
-
-if ak.Window.NewElements then
-ag(al.UIElements.SliderIcon.Frame.Thumb,0.2,{
-ImageTransparency=0,
-Size=UDim2.new(
-0,
-ak.Window.NewElements and(al.ThumbSize*2)or(al.ThumbSize+2),
-0,
-ak.Window.NewElements and(al.ThumbSize+4)or(al.ThumbSize+2)
-),
-},Enum.EasingStyle.Quint,Enum.EasingDirection.InOut):Play()
-end
-if ax then
-ax:Close(false)
-end
+connect(Input.InputEnded,function(input)
+if not dragInput then return end
+if (dragTouch and input==dragInput)or(not dragTouch and input.UserInputType==Enum.UserInputType.MouseButton1)then
+setFromX(input.Position.X)
+stopDrag()
 end
 end)
-else
-aA=math.clamp(aA,al.Value.Min or 0,al.Value.Max or 100)
-
-local b=math.clamp(
-(aA-(al.Value.Min or 0))/((al.Value.Max or 100)-(al.Value.Min or 0)),
-0,
-1
-)
-aA=CalculateValue(al.Value.Min+b*(al.Value.Max-al.Value.Min))
-
-if aA~=aq then
-ag(al.UIElements.SliderIcon.Frame,0.05,{Size=UDim2.new(b,0,1,0)}):Play()
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aA)
-if ax then
-ax.TitleFrame.Text=FormatValue(aA)
-end
-al.Value.Default=FormatValue(aA)
-aq=aA
-ae.SafeCallback(al.Callback,FormatValue(aA))
-end
-end
-end
-end
-end
-
-function al.SetMax(az,aA)
-al.Value.Max=aA
-
-local aB=tonumber(al.Value.Default)or aq
-if aB>aA then
-al:Set(aA)
-else
-local b=
-math.clamp((aB-(al.Value.Min or 0))/(aA-(al.Value.Min or 0)),0,1)
-ag(al.UIElements.SliderIcon.Frame,0.1,{Size=UDim2.new(b,0,1,0)}):Play()
-end
-end
-
-function al.SetMin(az,aA)
-al.Value.Min=aA
-
-local aB=tonumber(al.Value.Default)or aq
-if aB<aA then
-al:Set(aA)
-else
-local b=math.clamp((aB-aA)/((al.Value.Max or 100)-aA),0,1)
-ag(al.UIElements.SliderIcon.Frame,0.1,{Size=UDim2.new(b,0,1,0)}):Play()
-end
-end
-
-ae.AddSignal(al.UIElements.SliderContainer.TextBox.FocusLost,function(az)
-local aA=tonumber(al.UIElements.SliderContainer.TextBox.Text)
-if aA then
-al:Set(aA)
-else
-al.UIElements.SliderContainer.TextBox.Text=FormatValue(aq)
-if ax then
-ax.TitleFrame.Text=FormatValue(aq)
-end
-end
-end)
-
-local az=ak.WindUI.GenerateGUID()
-
-ae.AddSignal(al.UIElements.SliderContainer.InputBegan,function(aA)
-if al.Locked or ai then
+connect(Input.WindowFocusReleased,stopDrag)
+connect(Input.InputBegan,function(input,processed)
+if destroyed or slider.Locked or slider.IsFocusing or dragInput or Input:GetFocusedTextBox()then return end
+local selected=GuiService.SelectedObject==hit
+if not selected and keyboardOwner~=slider then return end
+if processed and not selected then return end
+local key=input.KeyCode
+local inputType=input.UserInputType
+if inputType==Enum.UserInputType.MouseButton1 or inputType==Enum.UserInputType.Touch then
+if keyboardOwner==slider then keyboardOwner=nil end
 return
 end
-if
-aA.UserInputType==Enum.UserInputType.MouseButton1
-or aA.UserInputType==Enum.UserInputType.Touch
-then
-if ak.WindUI.CurrentInput and ak.WindUI.CurrentInput~=az then
-return
-end
-ak.WindUI.CurrentInput=az
-
-al:Set(ap,aA)
-
-
-if ak.Window.NewElements then
-ag(al.UIElements.SliderIcon.Frame.Thumb,0.24,{
-ImageTransparency=0.85,
-Size=UDim2.new(
-0,
-(ak.Window.NewElements and(al.ThumbSize*2)or al.ThumbSize)+8,
-0,
-al.ThumbSize+8
-),
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end
-if ax then
-ax:Open()
-end
-
+if key==Enum.KeyCode.Left or key==Enum.KeyCode.Down then
+apply(current-slider.Step,true)
+elseif key==Enum.KeyCode.Right or key==Enum.KeyCode.Up then
+apply(current+slider.Step,true)
+elseif key==Enum.KeyCode.Home then
+apply(slider.Value.Min,true)
+elseif key==Enum.KeyCode.End then
+apply(slider.Value.Max,true)
 end
 end)
-
-return al.__type,al
+connect(row:GetPropertyChangedSignal("Visible"),function()
+if not row.Visible then stopDrag()end
+end)
+draw(true)
+if slider.Locked then slider:Lock()end
+return slider.__type,slider
 end
 
-return ah end function a.J()
+return Module
+end function a.J()
 
 local aa=a.load'd'
 local ac=aa.New
@@ -8302,11 +8010,11 @@ FillDirection="Vertical",
 HorizontalAlignment="Center",
 })
 
-ap.UIElements.Menu=ak.NewRoundFrame(aq.MenuCorner,"Squircle",{
+ap.UIElements.Menu=ak.NewRoundFrame(0,"Squircle",{
 ThemeTag={
 ImageColor3="DropdownBackground",
 },
-ImageTransparency=1,
+ImageTransparency=0.02,
 Size=UDim2.new(1,0,1,0),
 AnchorPoint=Vector2.new(1,0),
 Position=UDim2.new(1,0,0,0),
@@ -8318,9 +8026,9 @@ ApplyStrokeMode="Border",
 Color=Color3.fromHex"#4D6BFE",
 }),
 al("UIPadding",{
-PaddingTop=UDim.new(0,aq.MenuPadding),
-PaddingLeft=UDim.new(0,aq.MenuPadding),
-PaddingRight=UDim.new(0,aq.MenuPadding),
+PaddingTop=UDim.new(0,4),
+PaddingLeft=UDim.new(0,4),
+PaddingRight=UDim.new(0,4),
 PaddingBottom=UDim.new(0,aq.MenuPadding),
 }),
 al("UIListLayout",{
@@ -8329,7 +8037,7 @@ Padding=UDim.new(0,aq.MenuPadding),
 }),
 al("Frame",{
 BackgroundTransparency=1,
-Size=UDim2.new(1,0,1,ap.SearchBarEnabled and-aq.MenuPadding-aq.SearchBarHeight),
+Size=UDim2.new(1,0,1,ap.SearchBarEnabled and(-aq.MenuPadding-aq.SearchBarHeight)or 0),
 
 ClipsDescendants=true,
 LayoutOrder=999,
@@ -8340,12 +8048,13 @@ CornerRadius=UDim.new(0,aq.MenuCorner-aq.MenuPadding),
 }),
 al("ScrollingFrame",{
 Size=UDim2.new(1,0,1,0),
-ScrollBarThickness=0,
+ScrollBarThickness=3,
 ScrollingDirection="Y",
 AutomaticCanvasSize="Y",
 CanvasSize=UDim2.new(0,0,0,0),
 BackgroundTransparency=1,
-ScrollBarImageTransparency=1,
+ScrollBarImageTransparency=0.45,
+ScrollBarImageColor3=Color3.fromRGB(95,135,230),
 },{
 ap.UIElements.UIListLayout,
 }),
@@ -8364,56 +8073,52 @@ AnchorPoint=Vector2.new(1,0),
 },{
 ap.UIElements.Menu,
 al("UISizeConstraint",{
-MinSize=Vector2.new(170,0),
-MaxSize=Vector2.new(300,400),
+MinSize=Vector2.new(1,0),
+MaxSize=Vector2.new(250,260),
 }),
 })
 
 local function RecalculateCanvasSize()
-ap.UIElements.Menu.Frame.ScrollingFrame.CanvasSize=
-UDim2.fromOffset(0,ap.UIElements.UIListLayout.AbsoluteContentSize.Y)
+local scroll=ap.UIElements.Menu.Frame.ScrollingFrame
+scroll.AutomaticCanvasSize=Enum.AutomaticSize.None
+scroll.CanvasSize=UDim2.fromOffset(0,ap.UIElements.UIListLayout.AbsoluteContentSize.Y)
 end
 
 local function RecalculateListSize()
-local at=ao.WindUI.DropdownGui.AbsoluteSize.Y
-
-local au=ap.UIElements.UIListLayout.AbsoluteContentSize.Y/ao.UIScale
-local av=ap.SearchBarEnabled and(aq.SearchBarHeight+(aq.MenuPadding*3))
-or(aq.MenuPadding*2)
-local aw=au+av
-
-if aw>at then
-ap.UIElements.MenuCanvas.Size=
-UDim2.fromOffset(ap.UIElements.MenuCanvas.AbsoluteSize.X,at)
-else
-ap.UIElements.MenuCanvas.Size=
-UDim2.fromOffset(ap.UIElements.MenuCanvas.AbsoluteSize.X,aw)
+local view=ao.WindUI.DropdownGui.AbsoluteSize
+local header=ap.SearchBarEnabled and(aq.SearchBarHeight+aq.MenuPadding*3)or aq.MenuPadding*2
+local limit=math.max(header+28,math.min(260,view.Y-24))
+local rows=ap.UIElements.UIListLayout.AbsoluteContentSize.Y
+local width=math.min(math.clamp(ap.MenuWidth or 200,150,250),math.max(1,view.X-16))
+ap.UIElements.MenuCanvas.Size=UDim2.fromOffset(width,math.clamp(rows+header,header+28,limit))
+RecalculateCanvasSize()
 end
-end
+ak.AddSignal(ap.UIElements.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"),RecalculateListSize)
 
-function UpdatePosition()
-local at=ap.UIElements.Dropdown or ap.DropdownFrame.UIElements.Main
-local au=ap.UIElements.MenuCanvas
-
-local av=ah.ViewportSize.Y
--(at.AbsolutePosition.Y+at.AbsoluteSize.Y)
--aq.MenuPadding
--54
-local aw=au.AbsoluteSize.Y+aq.MenuPadding
-
-local ax=-54
-if av<aw then
-ax=aw-av-54
+local function UpdatePosition()
+RecalculateListSize()
+local button=ap.UIElements.Dropdown or ap.DropdownFrame.UIElements.Main
+local canvas=ap.UIElements.MenuCanvas
+local view=ao.WindUI.DropdownGui.AbsoluteSize
+local right=math.max(8,view.X-8)
+local left=math.min(right,canvas.AbsoluteSize.X+8)
+local x=math.clamp(button.AbsolutePosition.X+button.AbsoluteSize.X,left,right)
+local below=button.AbsolutePosition.Y+button.AbsoluteSize.Y+6
+local y=below
+if below+canvas.AbsoluteSize.Y>view.Y-8 then y=button.AbsolutePosition.Y-canvas.AbsoluteSize.Y-6 end
+y=math.clamp(y,8,math.max(8,view.Y-canvas.AbsoluteSize.Y-8))
+canvas.Position=UDim2.fromOffset(x,y)
 end
 
-au.Position=UDim2.new(
-0,
-at.AbsolutePosition.X+at.AbsoluteSize.X,
-0,
-at.AbsolutePosition.Y+at.AbsoluteSize.Y-ax+(aq.MenuPadding*2)
-)
-end
-
+local placing=false
+ak.AddSignal(ap.UIElements.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"),function()
+if placing then return end
+placing=true
+task.defer(function()
+placing=false
+if ap.UIElements.MenuCanvas.Parent and ap.UIElements.MenuCanvas.Visible then UpdatePosition()end
+end)
+end)
 local at
 
 function as.Display(au)
@@ -8588,7 +8293,7 @@ ay.UIElements.TabItem=ak.NewRoundFrame(
 aq.MenuCorner-aq.MenuPadding,
 "Squircle",
 {
-Size=UDim2.new(1,0,0,30),
+Size=UDim2.new(1,0,0,28),
 AutomaticSize=ay.Desc and"Y",
 ImageTransparency=1,
 Parent=ap.UIElements.Menu.Frame.ScrollingFrame,
@@ -8839,7 +8544,7 @@ end
 
 ap.UIElements.MenuCanvas.Size=UDim2.new(
 0,
-ap.MenuWidth+6+6+5+5+18+6+6,
+math.min(math.clamp(ap.MenuWidth or 200,150,250),math.max(1,ao.WindUI.DropdownGui.AbsoluteSize.X-16)),
 ap.UIElements.MenuCanvas.Size.Y.Scale,
 ap.UIElements.MenuCanvas.Size.Y.Offset
 )
@@ -8931,15 +8636,15 @@ local ay=ap.UIElements.Dropdown or ap.DropdownFrame.UIElements.Main
 local az=ay.AbsolutePosition
 local aA=ay.AbsoluteSize
 
-local aB=ag.X>=az.X
-and ag.X<=az.X+aA.X
-and ag.Y>=az.Y
-and ag.Y<=az.Y+aA.Y
+local aB=au.Position.X>=az.X
+and au.Position.X<=az.X+aA.X
+and au.Position.Y>=az.Y
+and au.Position.Y<=az.Y+aA.Y
 
-local b=ag.X>=aw.X
-and ag.X<=aw.X+ax.X
-and ag.Y>=aw.Y
-and ag.Y<=aw.Y+ax.Y
+local b=au.Position.X>=aw.X
+and au.Position.X<=aw.X+ax.X
+and au.Position.Y>=aw.Y
+and au.Position.Y<=aw.Y+ax.Y
 
 if ao.Window.CanDropdown and ap.Opened and not aB and not b then
 as:Close()
@@ -8981,8 +8686,8 @@ UICorner=10,
 UIPadding=12,
 MenuCorner=0,
 MenuPadding=6,
-TabPadding=10,
-SearchBarHeight=39,
+TabPadding=6,
+SearchBarHeight=32,
 TabIcon=18,
 }
 
@@ -9348,7 +9053,27 @@ local ai=af.Tween
 
 local ak=a.load'P'
 
+local function dsCodeFinite80(value)
+return type(value)=="number"and value==value and value>-math.huge and value<math.huge
+end
+
+function aa.NormalizeHeight(value)
+if typeof(value)=="UDim"then
+if dsCodeFinite80(value.Scale)and dsCodeFinite80(value.Offset)then return value end
+elseif dsCodeFinite80(value)then
+return UDim.new(0,value)
+end
+return nil
+end
+
+function aa.NormalizeCodeSize(value)
+if not dsCodeFinite80(value)then return 18 end
+return math.clamp(value,8,36)
+end
+
 function aa.New(al,am,an,ao,ap)
+al.Height=aa.NormalizeHeight(al.Height)
+al.CodeSize=aa.NormalizeCodeSize(al.CodeSize)
 local aq={
 Radius=am.ElementConfig.UICorner,
 Padding=am.NewElements and am.ElementConfig.UIPadding+4 or am.ElementConfig.UIPadding,
@@ -9460,7 +9185,7 @@ Visible=al.Title and true or false,
 
 
 ag("TextLabel",{
-Text=al.Title,
+Text=al.Title or"",
 
 
 
@@ -9472,7 +9197,7 @@ FontFace=Font.new(af.Font,Enum.FontWeight.Medium),
 TextXAlignment="Left",
 BackgroundTransparency=1,
 TextTruncate="AtEnd",
-Size=UDim2.new(1,at and-20-(aq.Padding*2),0,0),
+Size=UDim2.new(1,at and(-20-(aq.Padding*2))or 0,0,0),
 }),
 ag("UIPadding",{
 
@@ -9494,7 +9219,7 @@ local ay,az=af.NewRoundFrame(aq.Radius,"Squircle",{
 ImageColor3=Color3.fromHex"#212121",
 ImageTransparency=0.035,
 Size=al.Height~=nil
-and UDim2.new(1,0,al.Height.Scale,al.Height.Offset==0 and-40 or al.Height.Offset)
+and UDim2.new(1,0,al.Height.Scale,al.Height.Offset)
 or UDim2.new(1,0,0,20+(aq.Padding*2)),
 AutomaticSize=al.Height~=nil and"None"or"Y",
 Parent=an,
@@ -9524,7 +9249,7 @@ aq.TopbarFrameModule=ax
 
 af.AddSignal(ar:GetPropertyChangedSignal"TextBounds",function()
 if al.Height~=nil then
-as.Size=UDim2.new(1,0,1,al.Title~=nil and-(20+(aq.Padding*2))or nil)
+as.Size=UDim2.new(1,0,1,al.Title~=nil and-(20+(aq.Padding*2))or 0)
 else
 as.Size=
 UDim2.new(1,0,0,(ar.TextBounds.Y/(ap or 1))+((aq.Padding+3)*2))
@@ -9592,8 +9317,8 @@ local am={
 __type="Code",
 Title=al.Title,
 Code=al.Code,
-CodeSize=al.CodeSize or 18,
-Height=al.Height,
+CodeSize=ag.NormalizeCodeSize(al.CodeSize),
+Height=ag.NormalizeHeight(al.Height),
 CodeTheme=al.CodeTheme,
 Locked=false,
 CanCopied=al.CanCopied~=false,
@@ -9646,7 +9371,7 @@ am.Code=aq
 end
 
 function am.Set(ap,aq)
-return am.SetCode(aq)
+return am:SetCode(aq)
 end
 
 function am.Destroy(ap)
@@ -10555,385 +10280,415 @@ return aw.__type,aw
 end
 
 return as end function a.T()
+local UI=a.load'd'
+local New=UI.New
+local Tween=UI.Tween
+local Module={}
+local records=setmetatable({},{__mode="k"})
 
-local aa=a.load'd'
-local af=aa.New
-local ai=aa.Tween
+local function removeElement(list,element)
+if not list then return end
+for index=#list,1,-1 do
+if list[index]==element then table.remove(list,index)end
+end
+end
+local function reindexGlobal(list)
+for index,element in ipairs(list)do
+local record=records[element]
+if record then record.GlobalIndex=index end
+end
+end
 
-local ak={}
-
-function ak.New(al,am)
-local an={
+function Module.New(_,config)
+local elementConfig=config.Window.ElementConfig
+local section={
 __type="Section",
-Title=am.Title or"Section",
-Desc=am.Desc,
-Icon=am.Icon,
-IconThemed=am.IconThemed,
-TextXAlignment=am.TextXAlignment or"Left",
-TextSize=am.TextSize or 19,
-DescTextSize=am.DescTextSize or 16,
-Box=am.Box or false,
-BoxBorder=am.BoxBorder or false,
-FontWeight=am.FontWeight or Enum.FontWeight.SemiBold,
-DescFontWeight=am.DescFontWeight or Enum.FontWeight.Medium,
-TextTransparency=am.TextTransparency or 0.05,
-DescTextTransparency=am.DescTextTransparency or 0.4,
-Opened=am.Opened or false,
+Title=config.Title or"Section",
+Desc=config.Desc,
+Icon=config.Icon,
+IconThemed=config.IconThemed,
+TextXAlignment=config.TextXAlignment or"Left",
+TextSize=config.TextSize or 19,
+DescTextSize=config.DescTextSize or 16,
+Box=config.Box or false,
+BoxBorder=config.BoxBorder or false,
+FontWeight=config.FontWeight or Enum.FontWeight.SemiBold,
+DescFontWeight=config.DescFontWeight or Enum.FontWeight.Medium,
+TextTransparency=config.TextTransparency or 0.05,
+DescTextTransparency=config.DescTextTransparency or 0.4,
+Opened=config.Opened==true,
 UIElements={},
-
 HeaderSize=48,
 IconSize=20,
 Padding=10,
-
 Elements={},
-
 Expandable=false,
 }
+records[section]=config
+local destroyed=false
+local connections={}
+local heightTween
+local arrowTween
+local heightTarget
+local arrowTarget
+local layoutQueued=false
+local icon
+local sidePadding=section.Box and elementConfig.UIPadding+(config.Window.NewElements and 4 or 0)or section.Padding
+local contentPadding=section.Box and math.floor(elementConfig.UIPadding/1.5)or section.Padding
+local contentGap=10
+local scaleObject=config.WindUI and config.WindUI.UIScaleObj
 
-local ao
-
-function an.SetIcon(ap,aq)
-an.Icon=aq or nil
-if ao then
-ao:Destroy()
-end
-if aq then
-ao=aa.Image(
-aq,
-aq..":"..an.Title,
-0,
-am.Window.Folder,
-an.__type,
-true,
-an.IconThemed,
-"SectionIcon"
-)
-ao.Size=UDim2.new(0,an.IconSize,0,an.IconSize)
-end
+local function scale()
+local value=scaleObject and scaleObject.Scale or config.UIScale or 1
+return value>0 and value or 1
 end
 
-local ap=af("Frame",{
-Size=UDim2.new(0,an.IconSize,0,an.IconSize),
+local function connect(signal,callback)
+local connection=UI.AddSignal(signal,callback)
+connections[#connections+1]=connection
+return connection
+end
+
+local root=UI.NewRoundFrame(elementConfig.UICorner,"Squircle",{
+Name="Section",
+Size=UDim2.new(1,0,0,section.HeaderSize),
+AutomaticSize="None",
 BackgroundTransparency=1,
-Visible=false,
-},{
-af("ImageLabel",{
+ImageTransparency=not section.Box and 1 or nil,
+ClipsDescendants=true,
+Parent=config.Parent,
+ThemeTag={
+ImageTransparency=section.Box and"SectionBoxBackgroundTransparency"or nil,
+ImageColor3="SectionBoxBackground",
+},
+})
+local outline=UI.NewRoundFrame(math.max(elementConfig.UICorner-1,0),"SquircleOutline",{
+Name="Outline",
 Size=UDim2.new(1,0,1,0),
 BackgroundTransparency=1,
-Image=aa.Icon"chevron-down"[1],
-ImageRectSize=aa.Icon"chevron-down"[2].ImageRectSize,
-ImageRectOffset=aa.Icon"chevron-down"[2].ImageRectPosition,
+ImageTransparency=section.Box and section.BoxBorder and 0.92 or 1,
+ClipsDescendants=true,
+Parent=root,
+ThemeTag={ImageColor3="SectionBoxBorder"},
+})
+local header=New("TextButton",{
+Name="Top",
+Size=UDim2.new(1,0,0,section.HeaderSize),
+BackgroundTransparency=1,
+AutoButtonColor=false,
+Text="",
+Parent=outline,
+})
+local arrowData=UI.Icon"chevron-down"
+local arrow=New("ImageLabel",{
+Name="ExpandIcon",
+Size=UDim2.new(0,section.IconSize,0,section.IconSize),
+Position=UDim2.new(0,sidePadding,0.5,0),
+AnchorPoint=Vector2.new(0,0.5),
+BackgroundTransparency=1,
+Image=arrowData[1],
+ImageRectSize=arrowData[2].ImageRectSize,
+ImageRectOffset=arrowData[2].ImageRectPosition,
+Rotation=section.Opened and 0 or -90,
+Visible=false,
+Parent=header,
 ThemeTag={
 ImageTransparency="SectionExpandIconTransparency",
 ImageColor3="SectionExpandIcon",
 },
-}),
 })
-
-if an.Icon then
-an:SetIcon(an.Icon)
-end
-
-local aq=af("Frame",{
-Size=UDim2.new(1,0,1,0),
+local titleStack=New("Frame",{
+Name="TitleFrame",
+Size=UDim2.new(1,-sidePadding*2,0,0),
+Position=UDim2.new(0,sidePadding,0,section.Padding),
+AutomaticSize="Y",
 BackgroundTransparency=1,
+Parent=header,
 },{
-af("UIListLayout",{
+New("UIListLayout",{
 FillDirection="Vertical",
-HorizontalAlignment=an.TextXAlignment,
-VerticalAlignment="Center",
+HorizontalAlignment=section.TextXAlignment,
 Padding=UDim.new(0,4),
+SortOrder="LayoutOrder",
 }),
 })
-
-local ar,as
-
-local function createTitle(at,au)
-return af("TextLabel",{
-BackgroundTransparency=1,
-TextXAlignment=an.TextXAlignment,
-AutomaticSize="Y",
-TextSize=au=="Title"and an.TextSize or an.DescTextSize,
-TextTransparency=au=="Title"and an.TextTransparency or an.DescTextTransparency,
-ThemeTag={
-TextColor3="Text",
-},
-FontFace=Font.new(aa.Font,au=="Title"and an.FontWeight or an.DescFontWeight),
-
-
-Text=at,
+local function createLabel(name,text,size,weight,transparency,order)
+return New("TextLabel",{
+Name=name,
+Text=text or"",
 Size=UDim2.new(1,0,0,0),
+AutomaticSize="Y",
+BackgroundTransparency=1,
+TextXAlignment=section.TextXAlignment,
+TextSize=size,
+TextTransparency=transparency,
 TextWrapped=true,
-Parent=aq,
+FontFace=Font.new(UI.Font,weight),
+LayoutOrder=order,
+Parent=titleStack,
+ThemeTag={TextColor3="Text"},
 })
 end
-
-ar=createTitle(an.Title,"Title")
-if an.Desc then
-as=createTitle(an.Desc,"Desc")
-end
-
-local function UpdateTitleSize()
-local at=0
-if ao then
-at=at-(an.IconSize+8)
-end
-if ap.Visible then
-at=at-(an.IconSize+8)
-end
-aq.Size=UDim2.new(1,at,0,0)
-end
-
-local at=aa.NewRoundFrame(am.Window.ElementConfig.UICorner,"Squircle",{
-Size=UDim2.new(1,0,0,0),
-BackgroundTransparency=1,
-Parent=am.Parent,
-
-AutomaticSize="Y",
-ThemeTag={
-ImageTransparency=an.Box and"SectionBoxBackgroundTransparency"or nil,
-ImageColor3="SectionBoxBackground",
-},
-ImageTransparency=not an.Box and 1 or nil,
-},{
-aa.NewRoundFrame(am.Window.ElementConfig.UICorner-1,"SquircleOutline",{
-Size=UDim2.new(1,0,1,0),
-
-
-
-ThemeTag={
-
-ImageColor3="SectionBoxBorder",
-},
-ImageTransparency=an.Box and an.BoxBorder and 0.92 or 1,
-Name="Outline",
-ClipsDescendants=true,
-},{
-af("TextButton",{
-Size=UDim2.new(1,0,0,an.Expandable and 0 or(not as and an.HeaderSize or 0)),
-BackgroundTransparency=1,
-AutomaticSize=(not an.Expandable or as)and"Y"or nil,
-Text="",
-Name="Top",
-},{
-an.Box and af("UIPadding",{
-PaddingTop=UDim.new(
-0,
-am.Window.ElementConfig.UIPadding+(am.Window.NewElements and 4 or 0)
-),
-PaddingLeft=UDim.new(
-0,
-am.Window.ElementConfig.UIPadding+(am.Window.NewElements and 4 or 0)
-),
-PaddingRight=UDim.new(
-0,
-am.Window.ElementConfig.UIPadding+(am.Window.NewElements and 4 or 0)
-),
-PaddingBottom=UDim.new(
-0,
-am.Window.ElementConfig.UIPadding+(am.Window.NewElements and 4 or 0)
-),
-})or nil,
-ao,
-aq,
-af("UIListLayout",{
-Padding=UDim.new(0,8),
-FillDirection="Horizontal",
-VerticalAlignment="Center",
-HorizontalAlignment="Left",
-}),
-ap,
-}),
-af("Frame",{
-BackgroundTransparency=1,
-Size=UDim2.new(1,0,0,0),
-AutomaticSize="Y",
-Name="Content",
+local title=createLabel("Title",section.Title,section.TextSize,section.FontWeight,section.TextTransparency,1)
+local desc=createLabel("Desc",section.Desc,section.DescTextSize,section.DescFontWeight,section.DescTextTransparency,2)
+desc.Visible=section.Desc~=nil and section.Desc~=""
+local separator=New("Frame",{
+Name="SectionDivider",
+Size=UDim2.new(1,-sidePadding*2,0,1),
+Position=UDim2.new(0,sidePadding,0,section.HeaderSize),
+BorderSizePixel=0,
+BackgroundColor3=Color3.new(1,1,1),
 Visible=false,
-Position=UDim2.new(0,0,0,an.HeaderSize+10),
+Parent=outline,
 },{
-an.Box and af("UIPadding",{
-PaddingLeft=UDim.new(0,am.Window.ElementConfig.UIPadding/1.5),
-PaddingRight=UDim.new(0,am.Window.ElementConfig.UIPadding/1.5),
-PaddingBottom=UDim.new(0,am.Window.ElementConfig.UIPadding/1.5),
-})or nil,
-af("UIListLayout",{
-FillDirection="Vertical",
-Padding=UDim.new(0,am.Tab.Gap),
-VerticalAlignment="Top",
-}),
-}),
+New("UIGradient",{
+Color=ColorSequence.new{
+ColorSequenceKeypoint.new(0,Color3.new(1,1,1)),
+ColorSequenceKeypoint.new(1,Color3.fromRGB(77,107,254)),
+},
+Transparency=NumberSequence.new{
+NumberSequenceKeypoint.new(0,0.2),
+NumberSequenceKeypoint.new(1,0.05),
+},
 }),
 })
+local content=New("Frame",{
+Name="Content",
+Size=UDim2.new(1,0,0,contentPadding),
+Position=UDim2.new(0,0,0,section.HeaderSize+contentGap),
+BackgroundTransparency=1,
+Parent=outline,
+},{
+New("UIPadding",{
+PaddingLeft=UDim.new(0,contentPadding),
+PaddingRight=UDim.new(0,contentPadding),
+PaddingBottom=UDim.new(0,contentPadding),
+}),
+New("UIListLayout",{
+FillDirection="Vertical",
+Padding=UDim.new(0,config.Tab and config.Tab.Gap or 6),
+VerticalAlignment="Top",
+SortOrder="LayoutOrder",
+}),
+})
+local contentLayout=content.UIListLayout
+section.ElementFrame=root
+section.UIElements.ControlRow=root
+section.UIElements.Main=root
+section.UIElements.Header=header
+section.UIElements.Title=title
+section.UIElements.Desc=desc
+section.UIElements.ExpandIcon=arrow
+section.UIElements.Content=content
+section.UIElements.Divider=separator
+section.UIElements.Layout=contentLayout
+root:SetAttribute("DSControl",true)
 
+local function updateTitleWidth()
+local left=sidePadding
+if section.Expandable then left=left+section.IconSize+8 end
+if icon then
+icon.Position=UDim2.new(0,left,0.5,0)
+left=left+section.IconSize+8
+end
+titleStack.Position=UDim2.new(0,left,0,section.Padding)
+titleStack.Size=UDim2.new(1,-left-sidePadding,0,0)
+end
 
-
-
-
-an.ElementFrame=at
-
-at.Outline.Top:GetPropertyChangedSignal"AbsoluteSize":Connect(function()
-at.Outline.Content.Position=UDim2.new(0,0,0,(at.Outline.Top.AbsoluteSize.Y/am.UIScale)+10)
-
-if an.Opened then
-an:Open(true)
+local function update(instant)
+if destroyed then return end
+local divisor=scale()
+local headerHeight=math.max(section.HeaderSize,titleStack.AbsoluteSize.Y/divisor+section.Padding*2)
+local contentHeight=math.max(0,contentLayout.AbsoluteContentSize.Y/divisor)+contentPadding
+header.Size=UDim2.new(1,0,0,headerHeight)
+separator.Position=UDim2.new(0,sidePadding,0,headerHeight)
+content.Position=UDim2.new(0,0,0,headerHeight+contentGap)
+content.Size=UDim2.new(1,0,0,contentHeight)
+local target=headerHeight+(section.Expandable and section.Opened and contentGap+contentHeight or 0)
+if instant or heightTarget~=target then
+heightTarget=target
+if heightTween then heightTween:Cancel() heightTween=nil end
+local size=UDim2.new(root.Size.X.Scale,root.Size.X.Offset,0,target)
+if instant then
+root.Size=size
 else
-an.Close(true)
+heightTween=Tween(root,section.Opened and 0.26 or 0.2,{Size=size},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+heightTween:Play()
 end
-end)
-
-local au=am.ElementsModule
-
-au.Load(an,at.Outline.Content,au.Elements,am.Window,am.WindUI,function()
-if not an.Expandable then
-an.Expandable=true
-ap.Visible=true
-UpdateTitleSize()
 end
-end,au,am.UIScale,am.Tab)
-
-UpdateTitleSize()
-
-function an.SetTitle(av,aw)
-an.Title=aw
-ar.Text=aw
-end
-
-function an.SetDesc(av,aw)
-an.Desc=aw
-if not as then
-as=createTitle(aw,"Desc")
-end
-as.Text=aw
-end
-
-function an.Destroy(av)
-for aw,ax in next,an.Elements do
-ax:Destroy()
-end
-
-
-
-
-
-
-
-
-at:Destroy()
-end
-
-function an.Open(av,aw)
-if an.Expandable then
-an.Opened=true
-if aw then
-at.Size=UDim2.new(
-at.Size.X.Scale,
-at.Size.X.Offset,
-0,
-at.Outline.Top.AbsoluteSize.Y/am.UIScale
-+(at.Outline.Content.AbsoluteSize.Y/am.UIScale)
-+10
-)
-ap.ImageLabel.Rotation=180
+local rotation=section.Opened and 0 or -90
+if instant or arrowTarget~=rotation then
+arrowTarget=rotation
+if arrowTween then arrowTween:Cancel() arrowTween=nil end
+if instant then
+arrow.Rotation=rotation
 else
-ai(at,0.33,{
-Size=UDim2.new(
-at.Size.X.Scale,
-at.Size.X.Offset,
-0,
-at.Outline.Top.AbsoluteSize.Y/am.UIScale
-+(at.Outline.Content.AbsoluteSize.Y/am.UIScale)
-+10
-),
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-
-ai(
-ap.ImageLabel,
-0.2,
-{Rotation=180},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
-end
-end
-end
-function an.Close(av,aw)
-if an.Expandable then
-an.Opened=false
-if aw then
-at.Size=UDim2.new(
-at.Size.X.Scale,
-at.Size.X.Offset,
-0,
-(at.Outline.Top.AbsoluteSize.Y/am.UIScale)
-)
-ap.ImageLabel.Rotation=0
-else
-ai(at,0.26,{
-Size=UDim2.new(
-at.Size.X.Scale,
-at.Size.X.Offset,
-0,
-(at.Outline.Top.AbsoluteSize.Y/am.UIScale)
-),
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-ai(
-ap.ImageLabel,
-0.2,
-{Rotation=0},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
+arrowTween=Tween(arrow,0.18,{Rotation=rotation},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+arrowTween:Play()
 end
 end
 end
 
-aa.AddSignal(at.Outline.Top.MouseButton1Click,function()
-if an.Expandable then
-if an.Opened then
-an:Close()
-else
-an:Open()
-end
-end
-end)
-
-aa.AddSignal(at.Outline.Content.UIListLayout:GetPropertyChangedSignal"AbsoluteContentSize",function()
-if an.Opened then
-an:Open(true)
-else
-an:Close(true)
-end
-end)
-
+local function queueLayout()
+if destroyed or layoutQueued then return end
+layoutQueued=true
 task.defer(function()
-if an.Expandable then
-
-
-
-
-
-
-
-
-at.Size=
-UDim2.new(at.Size.X.Scale,at.Size.X.Offset,0,at.Outline.Top.AbsoluteSize.Y/am.UIScale)
-at.AutomaticSize="None"
-at.Outline.Top.Size=UDim2.new(1,0,0,(not as and an.HeaderSize or 0))
-at.Outline.Top.AutomaticSize=(not an.Expandable or as)and"Y"or"None"
-at.Outline.Content.Visible=true
+layoutQueued=false
+update(false)
+end)
 end
-if an.Opened then
-an:Open()
-else
-an:Close(true)
+
+function section.SetIcon(_,value)
+if destroyed then return section end
+section.Icon=value
+if icon then icon:Destroy() icon=nil end
+if value then
+icon=UI.Image(value,tostring(value)..":"..section.Title,0,config.Window.Folder,section.__type,true,section.IconThemed,"SectionIcon")
+icon.Name="SectionIcon"
+icon.Size=UDim2.new(0,section.IconSize,0,section.IconSize)
+icon.AnchorPoint=Vector2.new(0,0.5)
+icon.Parent=header
+end
+section.UIElements.Icon=icon
+updateTitleWidth()
+queueLayout()
+return section
+end
+function section.SetTitle(_,value)
+if destroyed then return section end
+section.Title=tostring(value or"")
+title.Text=section.Title
+queueLayout()
+return section
+end
+function section.SetDesc(_,value)
+if destroyed then return section end
+section.Desc=value
+desc.Text=value==nil and""or tostring(value)
+desc.Visible=desc.Text~=""
+queueLayout()
+return section
+end
+function section.Open(_,instant)
+if destroyed then return section end
+section.Opened=true
+update(instant==true)
+return section
+end
+function section.Close(_,instant)
+if destroyed then return section end
+section.Opened=false
+update(instant==true)
+return section
+end
+local function detach(element,parent,childConfig)
+removeElement(parent.Elements,element)
+removeElement(config.Window.AllElements,element)
+if config.Tab and config.Tab~=parent then removeElement(config.Tab.Elements,element)end
+records[element]=nil
+for index,child in ipairs(parent.Elements)do
+local record=records[child]
+if record then record.Index=index end
+if child.ElementFrame then child.ElementFrame.LayoutOrder=index end
+end
+reindexGlobal(config.Window.AllElements)
+if parent.UpdateAllElementShapes then parent:UpdateAllElementShapes(parent)end
+end
+local function cleanup()
+if destroyed then return end
+destroyed=true
+if heightTween then heightTween:Cancel() end
+if arrowTween then arrowTween:Cancel() end
+for _,connection in ipairs(connections)do connection:Disconnect() end
+connections={}
+local parent=config.ParentTable
+if parent then detach(section,parent,config)end
+end
+function section.Destroy()
+if destroyed then return end
+local children={}
+local seen={}
+for _,child in pairs(section.Elements)do
+if not seen[child]then
+seen[child]=true
+children[#children+1]=child
+end
+end
+for _,child in ipairs(children)do
+if type(child.Destroy)=="function"then pcall(child.Destroy,child)end
+if records[child]then detach(child,section,records[child])end
+end
+cleanup()
+root:Destroy()
+end
+
+connect(root.Destroying,cleanup)
+connect(header.MouseButton1Click,function()
+if section.Expandable then
+if section.Opened then section:Close()else section:Open()end
 end
 end)
-
-return an.__type,an
+connect(titleStack:GetPropertyChangedSignal("AbsoluteSize"),queueLayout)
+connect(contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"),queueLayout)
+if scaleObject then
+connect(scaleObject:GetPropertyChangedSignal("Scale"),queueLayout)
+end
+local elementsModule=config.ElementsModule
+elementsModule.Load(section,content,elementsModule.Elements,config.Window,config.WindUI,function()
+if not section.Expandable then
+section.Expandable=true
+arrow.Visible=true
+separator.Visible=true
+updateTitleWidth()
+end
+queueLayout()
+end,elementsModule,config.UIScale,config.Tab)
+for name in pairs(elementsModule.Elements)do
+local constructor=section[name]
+section[name]=function(self,properties)
+if destroyed then return nil end
+properties=properties or{}
+local index=#section.Elements+1
+local registry=config.Window.AllElements
+local tabElements=config.Tab and config.Tab.Elements
+local previousGlobal=registry[index]
+local previousTab=tabElements and tabElements[index]
+local child=constructor(self,properties)
+if registry[index]==child then registry[index]=previousGlobal end
+if tabElements and tabElements[index]==child then tabElements[index]=previousTab end
+removeElement(registry,child)
+registry[#registry+1]=child
+properties.GlobalIndex=#registry
+records[child]=properties
+if child.ElementFrame then child.ElementFrame.LayoutOrder=index end
+local wrapper
+for key,value in pairs(child)do
+if type(key)=="string"and key~="ElementFrame"and key:match("Frame$")and type(value)=="table"then
+wrapper=value
+break
+end
+end
+if wrapper then
+local childDestroyed=false
+child.Destroy=function()
+if childDestroyed then return end
+childDestroyed=true
+wrapper:Destroy()
+detach(child,section,properties)
+queueLayout()
+end
+end
+return child
+end
+end
+section:SetIcon(section.Icon)
+update(true)
+queueLayout()
+return section.__type,section
 end
 
-return ak end function a.U()
+return Module
+end function a.U()
 
 local aa=a.load'd'
 local af=aa.New
@@ -10983,7 +10738,9 @@ al.Window.Folder,
 "Image",
 false
 )
-if an and an.Parent then
+if an then
+am.ElementFrame=an
+am.UIElements={Main=an}
 an.Parent=al.Parent
 an.Size=UDim2.new(1,0,0,0)
 an.BackgroundTransparency=1
@@ -11636,7 +11393,7 @@ aa:UpdateAllElementShapes(aa)
 end
 end
 
-ak.AllElements[at.Index]=av
+ak.AllElements[at.GlobalIndex]=av
 aa.Elements[at.Index]=av
 if ap then
 ap.Elements[at.Index]=av
@@ -13097,7 +12854,7 @@ Resizable=av.Resizable~=false,
 Background=av.Background,
 BackgroundImageTransparency=av.BackgroundImageTransparency or 0,
 ShadowTransparency=av.ShadowTransparency or 0.6,
-User=av.User or{},
+User={Enabled=false},
 Footer=av.Footer or{},
 Topbar=av.Topbar or{Height=52,ButtonsType="Default"},
 
@@ -13210,20 +12967,19 @@ aw.AcrylicPaint=az
 end
 
 local az=ao("Frame",{
-Size=UDim2.new(0,32,0,32),
-Position=UDim2.new(1,0,1,0),
-AnchorPoint=Vector2.new(0.5,0.5),
-BackgroundTransparency=1,
-ZIndex=99,
-Active=true,
+Name="DeepSeekResizeHandle",Size=UDim2.fromOffset(32,32),Position=UDim2.new(1,0,1,0),
+AnchorPoint=Vector2.new(0.5,0.5),BackgroundTransparency=1,ZIndex=99,Active=true,
 },{
 ao("ImageLabel",{
-Size=UDim2.new(0,96,0,96),
-BackgroundTransparency=1,
-Image="rbxassetid://120997033468887",
-Position=UDim2.new(0.5,-16,0.5,-16),
-AnchorPoint=Vector2.new(0.5,0.5),
-ImageTransparency=1,
+Name="ImageLabel",Size=UDim2.fromOffset(20,20),BackgroundTransparency=1,
+Image="",Position=UDim2.fromScale(0.5,0.5),
+AnchorPoint=Vector2.new(0.5,0.5),ImageTransparency=0.35,ScaleType="Fit",ZIndex=99,Active=false,
+ThemeTag={ImageColor3="ResizeHandle"},
+},{
+ao("Frame",{Name="CornerHorizontal",Size=UDim2.fromOffset(14,2),Position=UDim2.new(1,-2,1,-2),AnchorPoint=Vector2.new(1,1),BorderSizePixel=0,ZIndex=99,Active=false,ThemeTag={BackgroundColor3="ResizeHandle"}}),
+ao("Frame",{Name="CornerVertical",Size=UDim2.fromOffset(2,14),Position=UDim2.new(1,-2,1,-2),AnchorPoint=Vector2.new(1,1),BorderSizePixel=0,ZIndex=99,Active=false,ThemeTag={BackgroundColor3="ResizeHandle"}}),
+ao("Frame",{Name="CornerInnerH",Size=UDim2.fromOffset(7,1),Position=UDim2.new(1,-7,1,-7),AnchorPoint=Vector2.new(1,1),BorderSizePixel=0,ZIndex=99,Active=false,BackgroundTransparency=0.4,ThemeTag={BackgroundColor3="ResizeHandle"}}),
+ao("Frame",{Name="CornerInnerV",Size=UDim2.fromOffset(1,7),Position=UDim2.new(1,-7,1,-7),AnchorPoint=Vector2.new(1,1),BorderSizePixel=0,ZIndex=99,Active=false,BackgroundTransparency=0.4,ThemeTag={BackgroundColor3="ResizeHandle"}}),
 }),
 })
 local aA=an.NewRoundFrame(aw.UICorner,"Squircle",{
@@ -13393,173 +13149,6 @@ end
 
 
 local d
-if aw.User then
-local function GetUserThumb()local
-f=ak:GetUserThumbnailAsync(
-aw.User.Anonymous and 1 or ak.LocalPlayer.UserId,
-Enum.ThumbnailType.HeadShot,
-Enum.ThumbnailSize.Size420x420
-)
-return f
-end
-
-d=ao("TextButton",{
-Size=UDim2.new(
-0,
-aw.UIElements.SideBarContainer.AbsoluteSize.X-(aw.UIPadding/2),
-0,
-42+aw.UIPadding
-),
-Position=UDim2.new(0,aw.UIPadding/2,1,-(aw.UIPadding/2)),
-AnchorPoint=Vector2.new(0,1),
-BackgroundTransparency=1,
-Visible=aw.User.Enabled or false,
-},{
-an.NewRoundFrame(aw.UICorner-(aw.UIPadding/2),"SquircleOutline",{
-Size=UDim2.new(1,0,1,0),
-ThemeTag={
-ImageColor3="Text",
-},
-ImageTransparency=1,
-Name="Outline",
-},{
-ao("UIGradient",{
-Rotation=78,
-Color=ColorSequence.new{
-ColorSequenceKeypoint.new(0.0,Color3.fromRGB(255,255,255)),
-ColorSequenceKeypoint.new(0.5,Color3.fromRGB(255,255,255)),
-ColorSequenceKeypoint.new(1.0,Color3.fromRGB(255,255,255)),
-},
-Transparency=NumberSequence.new{
-NumberSequenceKeypoint.new(0.0,0.1),
-NumberSequenceKeypoint.new(0.5,1),
-NumberSequenceKeypoint.new(1.0,0.1),
-},
-}),
-}),
-an.NewRoundFrame(aw.UICorner-(aw.UIPadding/2),"Squircle",{
-Size=UDim2.new(1,0,1,0),
-ThemeTag={
-ImageColor3="Text",
-},
-ImageTransparency=1,
-Name="UserIcon",
-},{
-ao("ImageLabel",{
-Image=GetUserThumb(),
-BackgroundTransparency=1,
-Size=UDim2.new(0,42,0,42),
-ThemeTag={
-BackgroundColor3="Text",
-},
-BackgroundTransparency=0.93,
-},{
-ao("UICorner",{
-CornerRadius=UDim.new(1,0),
-}),
-}),
-ao("Frame",{
-AutomaticSize="XY",
-BackgroundTransparency=1,
-},{
-ao("TextLabel",{
-Text=aw.User.Anonymous and"Anonymous"or ak.LocalPlayer.DisplayName,
-TextSize=17,
-ThemeTag={
-TextColor3="Text",
-},
-FontFace=Font.new(an.Font,Enum.FontWeight.SemiBold),
-AutomaticSize="Y",
-BackgroundTransparency=1,
-Size=UDim2.new(1,-27,0,0),
-TextTruncate="AtEnd",
-TextXAlignment="Left",
-Name="DisplayName",
-}),
-ao("TextLabel",{
-Text=aw.User.Anonymous and"anonymous"or ak.LocalPlayer.Name,
-TextSize=15,
-TextTransparency=0.6,
-ThemeTag={
-TextColor3="Text",
-},
-FontFace=Font.new(an.Font,Enum.FontWeight.Medium),
-AutomaticSize="Y",
-BackgroundTransparency=1,
-Size=UDim2.new(1,-27,0,0),
-TextTruncate="AtEnd",
-TextXAlignment="Left",
-Name="UserName",
-}),
-ao("UIListLayout",{
-Padding=UDim.new(0,4),
-HorizontalAlignment="Left",
-}),
-}),
-ao("UIListLayout",{
-Padding=UDim.new(0,aw.UIPadding),
-FillDirection="Horizontal",
-VerticalAlignment="Center",
-}),
-ao("UIPadding",{
-PaddingLeft=UDim.new(0,aw.UIPadding/2),
-PaddingRight=UDim.new(0,aw.UIPadding/2),
-}),
-}),
-})
-
-function aw.User.Enable(f)
-aw.User.Enabled=true
-ap(
-aw.UIElements.SideBarContainer,
-0.25,
-{Size=UDim2.new(0,aw.SideBarWidth,1,-aw.Topbar.Height-42-(aw.UIPadding*2))},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
-d.Visible=true
-end
-function aw.User.Disable(f)
-aw.User.Enabled=false
-ap(
-aw.UIElements.SideBarContainer,
-0.25,
-{Size=UDim2.new(0,aw.SideBarWidth,1,-aw.Topbar.Height)},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
-d.Visible=false
-end
-function aw.User.SetAnonymous(f,g)
-if g~=false then
-g=true
-end
-aw.User.Anonymous=g
-d.UserIcon.ImageLabel.Image=GetUserThumb()
-d.UserIcon.Frame.DisplayName.Text=g and"Anonymous"or ak.LocalPlayer.DisplayName
-d.UserIcon.Frame.UserName.Text=g and"anonymous"or ak.LocalPlayer.Name
-end
-
-if aw.User.Enabled then
-aw.User:Enable()
-else
-aw.User:Disable()
-end
-
-if aw.User.Callback then
-an.AddSignal(d.MouseButton1Click,function()
-aw.User.Callback()
-end)
-an.AddSignal(d.MouseEnter,function()
-ap(d.UserIcon,0.04,{ImageTransparency=0.95}):Play()
-ap(d.Outline,0.04,{ImageTransparency=0.85}):Play()
-end)
-an.AddSignal(d.InputEnded,function()
-ap(d.UserIcon,0.04,{ImageTransparency=1}):Play()
-ap(d.Outline,0.04,{ImageTransparency=1}):Play()
-end)
-end
-end
 
 local f
 local g
@@ -14124,7 +13713,7 @@ end
 
 local z=an.Drag(
 aw.UIElements.Main,
-{aw.UIElements.Main.Main.Topbar,r.Frame},
+{aw.UIElements.Main.Main.Topbar,aw.UIElements.Main.Main.Topbar.Center,aw.UIElements.Main.Main.Topbar.Center.Holder,r.Frame},
 function(z,A)
 if not aw.Closed then
 if z and A==r.Frame then
@@ -14187,9 +13776,14 @@ aw.IconThemed,
 "WindowTopbarIcon"
 )
 v.Parent=A
-v.Size=UDim2.new(0,aw.IconSize,0,aw.IconSize)
-v.Position=UDim2.new(0.5,0,0.5,0)
+A.Size=UDim2.fromOffset(aw.IconSize+4,aw.IconSize+4)
+v.Size=UDim2.fromOffset(aw.IconSize,aw.IconSize)
+v.Position=UDim2.fromScale(0.5,0.5)
 v.AnchorPoint=Vector2.new(0.5,0.5)
+v.ClipsDescendants=false
+for _,image in ipairs(v:GetDescendants())do
+if image:IsA("ImageLabel")then image.ScaleType=Enum.ScaleType.Fit;image.ImageRectOffset=Vector2.new(0,0);image.ImageRectSize=Vector2.new(0,0)end
+end
 
 aw.OpenButtonMain:SetIcon(aw.Icon)
 
@@ -14371,231 +13965,182 @@ v.Size=G
 end
 end
 
+-- Replace [function aw.Open(C), function aw.ToggleTransparency(C,F)) in Window.
+-- Uses the existing root, content, native Tween and user-owned UIScale only.
+do
+local ds80Epoch=0
+local ds80Phase="initial" -- Native constructor starts Closed=false before its first Open.
+local ds80Tweens={}
+local ds80Duration=0.48
+local ds80CloseResult={}
+
+local function ds80Cancel()
+    ds80Epoch=ds80Epoch+1
+    local previous=ds80Tweens
+    ds80Tweens={}
+    for _,tween in ipairs(previous)do
+        pcall(function()tween:Cancel()end)
+    end
+    return ds80Epoch
+end
+
+local function ds80Tween(object,properties,duration)
+    if not object then return end
+    local tween=ap(object,duration or ds80Duration,properties,Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+    ds80Tweens[#ds80Tweens+1]=tween
+    tween:Play()
+end
+
+local function ds80Callback(callback,token)
+    if type(callback)~="function"then return end
+    task.defer(function()
+        if aw.Destroyed or ds80Epoch~=token then return end
+        an.SafeCallback(callback,aw)
+    end)
+end
+
+local function ds80OpenSize()
+    local wind=av.WindUI
+    if aw.IsFullscreen and wind.ScreenGui then
+        return UDim2.new(0,(wind.ScreenGui.AbsoluteSize.X-20)/wind.UIScale,
+            0,(wind.ScreenGui.AbsoluteSize.Y-20-52)/wind.UIScale)
+    end
+    return aw.Size
+end
+
+local function ds80Destroy()
+    if ds80Phase=="destroyed"then return aw end
+    ds80Phase="destroyed"
+    ds80Cancel()
+    aw.Destroyed=true
+    aw.DSDestroying=true
+    aw.Closed=true
+    aw.CanDropdown=false
+    aw.CanResize=false
+    aw.Dragging=false
+    if z then pcall(function()z:Set(false)end)end
+    local root=aw.UIElements.Main
+    if root then root.Visible=false end
+    if aw.OpenButtonMain then pcall(function()aw.OpenButtonMain:Visible(false)end)end
+    local wind=av.WindUI
+    pcall(function()wind:ToggleAcrylic(false)end)
+    local stopSound=wind.DeepSeek and wind.DeepSeek.StopSound
+    if type(stopSound)~="function"and _G then stopSound=_G.DS_StopSound end
+    if type(stopSound)=="function"then pcall(stopSound)end
+    if aw.AcrylicPaint and aw.AcrylicPaint.Model then
+        pcall(function()aw.AcrylicPaint.Model:Destroy()end)
+    end
+    -- A failed/already-destroyed GUI must not interrupt the other three.
+    for _,name in ipairs({"ScreenGui","NotificationGui","DropdownGui","TooltipGui"})do
+        local gui=wind[name]
+        if gui then pcall(function()gui:Destroy()end)end
+    end
+    -- Destroy every GUI before disconnecting Creator's registered signals.
+    pcall(an.DisconnectAll)
+    -- Native DisconnectAll mutates Signals during next(); finish any skipped entries.
+    if type(an.Signals)=="table"then
+        for key,connection in pairs(an.Signals)do
+            pcall(function()connection:Disconnect()end)
+            an.Signals[key]=nil
+        end
+    end
+    local callback=aw.OnDestroyCallback
+    if type(callback)=="function"then
+        task.defer(function()an.SafeCallback(callback,aw)end)
+    end
+    return aw
+end
+
+function ds80CloseResult.Destroy(C)
+    return ds80Destroy()
+end
+
 function aw.Open(C)
-if aw.Destroyed then
-return
-end
-task.spawn(function()
-if aw.OnOpenCallback then
-task.spawn(function()
-an.SafeCallback(aw.OnOpenCallback)
-end)
-end
-
-task.wait(0.06)
-aw.Closed=false
-
-aw.UIElements.Main.Size=UDim2.new(aw.Size.X.Scale,aw.Size.X.Offset,0,100)
-
-ap(aw.UIElements.Main,0.8,{
-
-Size=aw.Size,
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-
-if aw.UIElements.BackgroundGradient then
-ap(aw.UIElements.BackgroundGradient,0.2,{
-ImageTransparency=0,
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end
-
-aw.UIElements.Main.Background.ImageTransparency=1
-ap(aw.UIElements.Main.Background,0.4,{
-
-ImageTransparency=aw.Transparent and av.WindUI.TransparencyValue or 0,
-},Enum.EasingStyle.Exponential,Enum.EasingDirection.Out):Play()
-
-if i then
-if i:IsA"VideoFrame"then
-i.Visible=true
-else
-ap(i,0.2,{
-ImageTransparency=aw.BackgroundImageTransparency,
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end
+    if aw.Destroyed or ds80Phase=="destroyed"or ds80Phase=="opening"or ds80Phase=="open"then return aw end
+    local root=aw.UIElements.Main
+    if not root then return aw end
+    local token=ds80Cancel()
+    ds80Phase="opening"
+    aw.Closed=false
+    aw.DSHasOpened=true
+    aw.CanDropdown=true
+    aw.CanResize=aw.Resizable==true and not aw.IsFullscreen
+    root.Visible=true
+    local content=root:FindFirstChild("Main")
+    if content then content.Visible=true end
+    if aw.OpenButtonMain and aw.IsOpenButtonEnabled then aw.OpenButtonMain:Visible(false)end
+    if z then z:Set(true)end
+    av.WindUI:ToggleAcrylic(aw.Acrylic==true)
+    ds80Tween(root,{Size=ds80OpenSize()})
+    ds80Tween(aw.UIElements.BackgroundGradient,{ImageTransparency=0},0.42)
+    ds80Tween(root:FindFirstChild("Background"),{
+        ImageTransparency=aw.Transparent and av.WindUI.TransparencyValue or 0,
+    },0.42)
+    if i then
+        if i:IsA("VideoFrame")then i.Visible=true
+        else ds80Tween(i,{ImageTransparency=aw.BackgroundImageTransparency},0.42)end
+    end
+    ds80Tween(b,{ImageTransparency=aw.ShadowTransparency},0.42)
+    ds80Tween(r,{Size=UDim2.new(0,aw.DragFrameSize,0,4),ImageTransparency=0.8},0.42)
+    local grip=az and az:FindFirstChild("ImageLabel")
+    if aw.Resizable then ds80Tween(grip,{ImageTransparency=0.8},0.42)end
+    task.delay(ds80Duration,function()
+        if aw.Destroyed or ds80Epoch~=token or ds80Phase~="opening"then return end
+        ds80Phase="open"
+    end)
+    ds80Callback(aw.OnOpenCallback,token)
+    return aw
 end
 
-if aw.OpenButtonMain and aw.IsOpenButtonEnabled then
-aw.OpenButtonMain:Visible(false)
-end
-
-
-
-
-
-
-
-
-
-ap(
-b,
-0.25,
-{ImageTransparency=aw.ShadowTransparency},
-Enum.EasingStyle.Quint,
-Enum.EasingDirection.Out
-):Play()
-
-
-
-
-ap(
-r,
-0.45,
-{Size=UDim2.new(0,aw.DragFrameSize,0,4),ImageTransparency=0.8},
-Enum.EasingStyle.Exponential,
-Enum.EasingDirection.Out
-):Play()
-z:Set(true)
-
-if aw.Resizable then
-ap(
-az.ImageLabel,
-0.45,
-{ImageTransparency=0.8},
-Enum.EasingStyle.Exponential,
-Enum.EasingDirection.Out
-):Play()
-aw.CanResize=true
-end
-
-aw.CanDropdown=true
-aw.UIElements.Main.Visible=true
-
-
-
-aw.UIElements.Main:WaitForChild"Main".Visible=true
-
-av.WindUI:ToggleAcrylic(true)
-
-end)
-end
 function aw.Close(C)
-if aw.Destroyed then
-return
+    if aw.Destroyed or ds80Phase=="destroyed"or ds80Phase=="closing"or ds80Phase=="closed"then return ds80CloseResult end
+    local token=ds80Cancel()
+    ds80Phase="closing"
+    aw.Closed=true
+    aw.CanDropdown=false
+    aw.CanResize=false
+    if z then z:Set(false)end
+    av.WindUI:ToggleAcrylic(false)
+    local root=aw.UIElements.Main
+    if root then
+        local content=root:FindFirstChild("Main")
+        if content then content.Visible=false end
+        local target=ds80OpenSize()
+        ds80Tween(root,{Size=UDim2.new(target.X.Scale,target.X.Offset,0,0)})
+        ds80Tween(root:FindFirstChild("Background"),{ImageTransparency=1},0.42)
+    end
+    ds80Tween(aw.UIElements.BackgroundGradient,{ImageTransparency=1},0.42)
+    if i then
+        if i:IsA("VideoFrame")then i.Visible=false
+        else ds80Tween(i,{ImageTransparency=1},0.42)end
+    end
+    ds80Tween(b,{ImageTransparency=1},0.42)
+    ds80Tween(r,{Size=UDim2.new(0,0,0,4),ImageTransparency=1},0.42)
+    local grip=az and az:FindFirstChild("ImageLabel")
+    ds80Tween(grip,{ImageTransparency=1},0.42)
+    task.delay(ds80Duration,function()
+        if aw.Destroyed or ds80Epoch~=token or ds80Phase~="closing"then return end
+        ds80Phase="closed"
+        if root then root.Visible=false end
+        if aw.OpenButtonMain and not aw.IsPC and aw.IsOpenButtonEnabled then
+            aw.OpenButtonMain:Visible(true)
+        end
+    end)
+    ds80Callback(aw.OnCloseCallback,token)
+    return ds80CloseResult
 end
 
-local F={}
-
-if aw.OnCloseCallback then
-task.spawn(function()
-an.SafeCallback(aw.OnCloseCallback)
-end)
-end
-
-av.WindUI:ToggleAcrylic(false)
-
-if aw.UIElements.Main and aw.UIElements.Main:WaitForChild"Main"then
-aw.UIElements.Main.Main.Visible=false
-end
-
-aw.CanDropdown=false
-aw.Closed=true
-
-ap(aw.UIElements.Main,0.9,{
-
-Size=UDim2.new(aw.Size.X.Scale,aw.Size.X.Offset,0,0),
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-if aw.UIElements.BackgroundGradient then
-ap(aw.UIElements.BackgroundGradient,0.2,{
-ImageTransparency=1,
-},Enum.EasingStyle.Quint,Enum.EasingDirection.InOut):Play()
-end
-
-ap(aw.UIElements.Main.Background,0.3,{
-
-ImageTransparency=1,
-},Enum.EasingStyle.Exponential,Enum.EasingDirection.InOut):Play()
-
-
-
-
-
-
-
-
-if i then
-if i:IsA"VideoFrame"then
-i.Visible=false
-else
-ap(i,0.3,{
-ImageTransparency=1,
-},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-end
-end
-ap(b,0.25,{ImageTransparency=1},Enum.EasingStyle.Quint,Enum.EasingDirection.Out):Play()
-
-
-
-
-ap(
-r,
-0.3,
-{Size=UDim2.new(0,0,0,4),ImageTransparency=1},
-Enum.EasingStyle.Exponential,
-Enum.EasingDirection.InOut
-):Play()
-ap(
-az.ImageLabel,
-0.3,
-{ImageTransparency=1},
-Enum.EasingStyle.Exponential,
-Enum.EasingDirection.Out
-):Play()
-z:Set(false)
-aw.CanResize=false
-
-task.spawn(function()
-task.wait(0.4)
-
-if not aw.Closed then
-return
-end
-
-aw.UIElements.Main.Visible=false
-
-if aw.OpenButtonMain and not aw.Destroyed and not aw.IsPC and aw.IsOpenButtonEnabled then
-aw.OpenButtonMain:Visible(true)
-end
-end)
-
-function F.Destroy(G)
-task.spawn(function()
-if aw.OnDestroyCallback then
-task.spawn(function()
-an.SafeCallback(aw.OnDestroyCallback)
-end)
-end
-
-if aw.AcrylicPaint and aw.AcrylicPaint.Model then
-aw.AcrylicPaint.Model:Destroy()
-end
-
-aw.Destroyed=true
-
-task.wait(0.4)
-
-av.WindUI.ScreenGui:Destroy()
-av.WindUI.NotificationGui:Destroy()
-av.WindUI.DropdownGui:Destroy()
-av.WindUI.TooltipGui:Destroy()
-
-an.DisconnectAll()
-
-return
-end)
-end
-
-return F
-end
 function aw.Destroy(C)
-return aw:Close():Destroy()
+    return ds80Destroy()
 end
+
 function aw.Toggle(C)
-if aw.Closed then
-aw:Open()
-else
-aw:Close()
+    if aw.Destroyed then return aw end
+    if aw.Closed then aw:Open()else aw:Close()end
+    return aw
 end
 end
+
 
 function aw.ToggleTransparency(C,F)
 
@@ -15064,7 +14609,11 @@ if aw.UIElements.Main.Main.Topbar.Center.Visible==false then
 aw.UIElements.Main.Main.Topbar.Center.Visible=true
 end
 M.Window=aw
-return at:New(M,aw.UIElements.Main.Main.Topbar.Center.Holder)
+local tag=at:New(M,aw.UIElements.Main.Main.Topbar.Center.Holder)
+aw.UIElements.Main.Main.Topbar.Center.Active=false
+aw.UIElements.Main.Main.Topbar.Center.Holder.Active=false
+if M.Title==""then aw.UIElements.Main.Main.Topbar.Center.Holder.ScrollingEnabled=false end
+return tag
 end
 
 local L=av.WindUI.GenerateGUID()
@@ -15138,6 +14687,7 @@ end
 end
 end)
 
+aw.UIElements.ResizeHandle=az
 an.AddSignal(az.MouseEnter,function()
 if av.WindUI.CurrentInput and av.WindUI.CurrentInput~=L then
 return
@@ -15589,34 +15139,52 @@ aA.WindUI=aa
 return a.load'u'.new(aA,aa.ScreenGui.Popups)
 end
 
-local DS_THEME=(math.random(2)==1)and"Dark"or"Light"
+local DS_THEME="Dark"
 local DS_CDN={
 "https://raw.githubusercontent.com/lIllIIlII/NEW/main/deepseek-ui/assets/",
 "https://cdn.jsdelivr.net/gh/lIllIIlII/NEW@main/deepseek-ui/assets/",
 }
 local DS_BG={"bg_01.jpg","bg_02.jpg","bg_03.jpg","bg_04.jpg","bg_05.jpg","bg_06.jpg","bg_07.jpg","bg_08.jpg","bg_09.jpg","bg_10.jpg","bg_11.jpg","bg_12.jpg","bg_13.jpg","bg_14.jpg","bg_15.jpg"}
-local DS_PET={"pet_01.png","pet_02.png","pet_03.png","pet_04.png","pet_05.png","pet_06.png","pet_07.png","pet_08.png","pet_09.png","pet_10.png","pet_11.png","pet_12.png"}
+local DS_PET={"pet_01.png","pet_02.png","pet_03.png","pet_04.png","pet_05.png","pet_06.png","pet_07.png","pet_08.png","pet_09.png","pet_10.png","pet_11.png","pet_12.png","pet_extra_01.png","pet_extra_02.png","pet_extra_03.png","pet_extra_04.png","pet_extra_05.png","pet_extra_06.png"}
 local DS_TOP={"pet_03.png","pet_07.png","pet_10.png","pet_12.png"}
 local DS_ART={"art_01.jpg","art_02.jpg","art_03.jpg","art_04.jpg","art_05.jpg","art_06.jpg","art_07.jpg","art_08.jpg","art_09.jpg","art_10.jpg"}
-local DS_STIKER={"pet_01.png","pet_02.png","pet_04.png","pet_05.png","pet_06.png","pet_08.png","pet_09.png","pet_11.png"}
-local DS_FONTS={
-"Arcade","SciFi","Fantasy","Code","Highway","Cartoon","Bangers","LuckiestGuy",
-"Creepster","DenkOne","FredokaOne","Michroma","Nunito","Oswald","Ubuntu","Jura",
-"Roboto","RobotoMono","Sarpanch","TitilliumWeb","PermanentMarker","PatrickHand",
-"IndieFlower","AmaticSC","GrenzeGotisch","SpecialElite","Merriweather","Antique",
-"Bodoni","Garamond","SourceSans","SourceSansBold","Gotham","GothamBold","GothamBlack",
-"Arial","Legacy",
-}
+local DS_STIKER={"pet_01.png","pet_02.png","pet_04.png","pet_05.png","pet_06.png","pet_08.png","pet_09.png","pet_11.png","pet_extra_01.png","pet_extra_02.png","pet_extra_03.png","pet_extra_04.png","pet_extra_05.png","pet_extra_06.png"}
+local DS_FONTS={}
+local DS_FONTMAP={}
+local DS_FONTFAMILIES={}
+local DS_FONTFACE=nil
+local DS_LIBRARY=nil
+local DS_FontChanged=Instance.new("BindableEvent")
+local function DS_AddBuiltin(name)
+if DS_FONTMAP[name]then return end
+local ok,face=pcall(function()return Font.fromEnum(Enum.Font[name])end)
+if ok and face then
+local entry={name=name,face=face,family=face.Family}
+DS_FONTMAP[name]=entry
+if not DS_FONTFAMILIES[face.Family]then DS_FONTFAMILIES[face.Family]=true;table.insert(DS_FONTS,entry)end
+end
+end
+for _,name in ipairs({"Gotham","SourceSans","Roboto","RobotoMono","Arial","Ubuntu","Nunito","Montserrat","Oswald","Code","Cartoon","SciFi","Arcade","Bangers","Garamond","Antique","Bodoni","Highway","Fantasy","Jura","Merriweather","TitilliumWeb"})do DS_AddBuiltin(name)end
+for _,font in ipairs(Enum.Font:GetEnumItems())do if font.Name~="Unknown"then DS_AddBuiltin(font.Name)end end
 local DS_CACHE={}
+local DS_NATIVE_ASSETS={
+["ds-logo-blue.png"]="rbxassetid://76812298700165",
+["ds-lockup-blue.png"]="rbxassetid://134655875998764",
+["ds-logo-black.png"]="rbxassetid://108023120756076",
+["ds-lockup-black.png"]="rbxassetid://106034927644134",
+}
+if _G and type(rawget(_G,"DS_NATIVE_ASSETS"))=="table"then
+for name,id in pairs(rawget(_G,"DS_NATIVE_ASSETS"))do DS_NATIVE_ASSETS[name]=id end
+end
 local DS_TS=game:GetService"TweenService"
 local DS_UIS=game:GetService"UserInputService"
 local DS_ROOT=nil
 local DS_WIN=nil
 local DS_PAL=nil
-local DS_FONT="Arcade"
-local DS_FONTSCALE=1.08
+local DS_FONT="Gotham"
+local DS_FONTSCALE=1
 local DS_FACES={}
-local DS_VER="v7_"
+local DS_VER="v9_"
 local DS_DIR="DeepSeekUI"
 local function DS_EnsureDir()
 if isfolder and not isfolder(DS_DIR)then
@@ -15639,13 +15207,15 @@ end)
 end
 local function DS_Request(u)
 local r=http_request or(syn and syn.request)or request
-if not r then
-return nil
-end
+if r then
 local o,a=pcall(r,{Url=u,Method="GET"})
-if o and type(a)=="table"and a.Body and #a.Body>0 then
-return a.Body
+if o and type(a)=="table"and type(a.Body)=="string"and #a.Body>0 then
+local status=tonumber(a.StatusCode or a.Status)
+if not status or(status>=200 and status<300)then return a.Body end
 end
+end
+local ok,body=pcall(function()return game:HttpGet(u)end)
+if ok and type(body)=="string"and #body>0 then return body end
 return nil
 end
 local function DS_Try(p)
@@ -15655,46 +15225,52 @@ return a
 end
 return nil
 end
-local function DS_Asset(n)
-if DS_CACHE[n]then
-return DS_CACHE[n]
+local function DS_RemoteBytes(n)
+for _,base in ipairs(DS_CDN)do
+local body=DS_Request(base..n)
+if body then return body end
 end
-if not(writefile and getcustomasset)then
 return nil
 end
-local p=DS_DIR.."/"..DS_VER..n
-if isfile and isfile(p)then
-local got=DS_Try(p)
-if got then
-DS_CACHE[n]=got
-return got
-end
-end
+local function DS_AssetPath(n)
+if type(n)~="string"or n==""or n:find("..",1,true)or n:find("/",1,true)or n:find("\\",1,true)then return nil end
+if not(getcustomasset and isfile)then return nil end
+local path=DS_DIR.."/"..DS_VER..n
+local hasCached=isfile(path)
+if writefile then
 DS_EnsureDir()
-local b
-for _,x in next,DS_CDN do
-b=DS_Request(x..n)
-if b then
-break
+local bytes=DS_RemoteBytes(n)
+if bytes then
+local ok=pcall(writefile,path,bytes)
+if ok and isfile(path)then return path end
 end
 end
-if b and pcall(writefile,p,b)then
-local got=DS_Try(p)
-if got then
-DS_CACHE[n]=got
-return got
-end
-end
-for _,old in next,{DS_DIR.."/v6_"..n,DS_DIR.."/v5_"..n,"DeepSeekUI/"..n}do
-if isfile and isfile(old)then
-local got=DS_Try(old)
-if got then
-DS_CACHE[n]=got
-return got
-end
+if hasCached then return path end
+local candidates={DS_DIR.."/"..n,"Delta/Workspace/DeepSeekUI/"..n,"Delta/Workspace/"..n,"DeepSeekUI/"..n}
+for _,candidate in ipairs(candidates)do
+if isfile(candidate)then
+local old=DS_Try(candidate)
+if old then return candidate end
 end
 end
 return nil
+end
+local function DS_Asset(n)
+if type(n)~="string"or n==""then return nil end
+if DS_CACHE[n]then return DS_CACHE[n]end
+local native=DS_NATIVE_ASSETS[n]
+if type(native)=="number"and native>0 and native%1==0 then native=tostring(native)end
+if type(native)=="string"and native:match("^%d+$")and tonumber(native)>0 then native="rbxassetid://"..native end
+if type(native)=="string"and native:match("^rbxassetid://%d+$")then
+DS_CACHE[n]=native
+return native
+end
+if not getcustomasset then return nil end
+local path=DS_AssetPath(n)
+if not path then return nil end
+local asset=DS_Try(path)
+if asset then DS_CACHE[n]=asset end
+return asset
 end
 if _G then
 _G.DS_Asset=DS_Asset
@@ -15719,35 +15295,118 @@ for _,c in next,o:GetChildren()do
 DS_Walk(c,fn)
 end
 end
+local function DS_FontTarget(o)
+return(o:IsA("TextLabel")or o:IsA("TextButton")or o:IsA("TextBox"))and not o:FindFirstAncestor("DeepSeekTicker")and not o:FindFirstAncestor("DeepSeekMini")
+end
 local function DS_ApplyFont()
-local r=DS_ROOT
-if not r then
-return
+local face=DS_FONTFACE or DS_Face(DS_FONT)or DS_Face("Gotham")
+local count=0
+local roots={}
+if DS_LIBRARY then
+for _,name in ipairs({"ScreenGui","DropdownGui","NotificationGui","TooltipGui"})do
+local v=DS_LIBRARY[name]
+if v then table.insert(roots,v)end
 end
-local f=DS_Face(DS_FONT)or DS_Face"Code"
-DS_Walk(r,function(o)
-if o:IsA"TextLabel"or o:IsA"TextButton"or o:IsA"TextBox"then
-if o:FindFirstAncestor"DeepSeekTicker"then
-return
 end
-local b=o:GetAttribute"DS_Base"
-if not b then
-b=o.TextSize
-o:SetAttribute("DS_Base",b)
-end
-if o.TextScaled then
-return
-end
-DS_Set(o,"TextSize",math.max(6,math.floor(b*DS_FONTSCALE+0.5)))
-end
+if #roots==0 and DS_ROOT then table.insert(roots,DS_ROOT)end
+for _,root in ipairs(roots)do
+for _,o in ipairs(root:GetDescendants())do
+if DS_FontTarget(o)then
+local ok=pcall(function()
+local prior=o.FontFace
+local f=Font.new(face.Family,prior.Weight,prior.Style)
+o.FontFace=f
+local base=o:GetAttribute("DS_Base")
+if not base then base=o.TextSize;o:SetAttribute("DS_Base",base)end
+if not o.TextScaled then o.TextSize=math.max(6,math.floor(base*DS_FONTSCALE+0.5))end
 end)
+if ok then count=count+1 end
 end
-local function DS_SetFont(n)
-if type(n)~="string"then
-return
 end
-DS_FONT=n
-DS_ApplyFont()
+end
+return count
+end
+local function DS_SetFont(value)
+local face,name
+if typeof(value)=="Font"then face=value;name="Custom"
+elseif typeof(value)=="EnumItem"then
+local ok,result=pcall(function()return Font.fromEnum(value)end)
+if ok then face=result;name=value.Name end
+elseif type(value)=="string"then
+local entry=DS_FONTMAP[value]
+if entry then face=entry.face;name=entry.name
+else
+local ok,result=pcall(function()
+if string.find(value,"://",1,true)then return Font.new(value)end
+return Font.fromEnum(Enum.Font[value])
+end)
+if ok then face=result;name=value end
+end
+end
+if not face then return false,"Unknown font: "..tostring(value)end
+DS_FONT=name
+DS_FONTFACE=face
+if DS_LIBRARY and DS_LIBRARY.Creator then
+local ok,err=pcall(function()DS_LIBRARY.Creator.UpdateFont(face.Family)end)
+if not ok then warn("[DeepSeekUI] font registry: "..tostring(err))end
+end
+local count=DS_ApplyFont()
+DS_FontChanged:Fire(name,count)
+return true,count
+end
+local function DS_LoadFontUrl(url,name)
+if type(url)~="string"or not string.match(url,"^https?://")then return false,"Expected an HTTP(S) font URL"end
+if not(writefile and getcustomasset)then return false,"Font file APIs are missing"end
+local data=DS_Request(url)
+if not data or #data<128 then return false,"Font download returned no data"end
+DS_EnsureDir()
+local id=tostring(math.floor(os.clock()*1000000))
+local face,err
+if string.sub(data,1,1)=="{"then
+local ok,spec=pcall(function()return game:GetService("HttpService"):JSONDecode(data)end)
+if not ok or type(spec)~="table"or type(spec.faces)~="table"then return false,"Invalid font-family JSON"end
+for i,f in ipairs(spec.faces)do
+local asset=f.assetId
+if type(asset)=="string"and string.match(asset,"^https?://")then
+local bytes=DS_Request(asset)
+if not bytes or #bytes<128 then return false,"Font face download failed"end
+local path="DeepSeekUI/font_"..id.."_"..i..".ttf"
+writefile(path,bytes)
+f.assetId=getcustomasset(path)
+end
+end
+local path="DeepSeekUI/font_"..id..".json"
+writefile(path,game:GetService("HttpService"):JSONEncode(spec))
+local ok,res=pcall(function()return Font.new(getcustomasset(path))end)
+if ok then face=res else err=res end
+else
+local lower=string.lower(url)
+local ext=string.find(lower,".otf",1,true)and".otf"or".ttf"
+local path="DeepSeekUI/font_"..id..ext
+writefile(path,data)
+local spec={name=name or"Web Font",faces={{name="Regular",weight=400,style="normal",assetId=getcustomasset(path)}}}
+local family="DeepSeekUI/font_"..id..".json"
+writefile(family,game:GetService("HttpService"):JSONEncode(spec))
+local ok,res=pcall(function()return Font.new(getcustomasset(family))end)
+if ok then face=res else err=res end
+end
+if not face then return false,tostring(err)end
+local label=name or("Web Font "..tostring(#DS_FONTS+1))
+local entry={name=label,face=face,family=face.Family}
+DS_FONTMAP[label]=entry
+table.insert(DS_FONTS,entry)
+local ok,count=DS_SetFont(label)
+return ok,label,count
+end
+local function DS_SetFontIndex(i)
+local entry=DS_FONTS[tonumber(i)or 0]
+if not entry then return false,"Font index is out of range"end
+return DS_SetFont(entry.name)
+end
+local function DS_FontNames()
+local names={}
+for _,entry in ipairs(DS_FONTS)do names[#names+1]=entry.name end
+return names
 end
 local function DS_SetFontScale(v)
 DS_FONTSCALE=math.clamp(tonumber(v)or 1,0.5,2)
@@ -15758,7 +15417,10 @@ if t=="Light"then
 return{
 accent=Color3.fromHex"#4D6BFE",
 soft=Color3.fromHex"#8FA8FF",
-glass=0.42,
+glass=0.98,
+bgTop=0.42,
+bgMid=0.56,
+bgBottom=0.78,
 banner=0.66,
 stroke=0.66,
 fade=0.30,
@@ -15769,7 +15431,10 @@ end
 return{
 accent=Color3.fromHex"#5B7BFF",
 soft=Color3.fromHex"#7C97FF",
-glass=0.30,
+glass=0.98,
+bgTop=0.20,
+bgMid=0.36,
+bgBottom=0.62,
 banner=0.46,
 stroke=0.58,
 fade=0.38,
@@ -15838,6 +15503,13 @@ for k,t in next,G.Tabs do
 local b=t.UIElements and t.UIElements.Main
 if b then
 local e=DS_TabEdge(b)
+local outline=b:FindFirstChild("DeepSeekSelectedTab")
+if not outline then
+outline=DS_Node("Frame",b,{Name="DeepSeekSelectedTab",Size=UDim2.fromScale(1,1),BackgroundTransparency=1,BorderSizePixel=0,Active=false,ZIndex=6})
+DS_Node("UIStroke",outline,{Color=DS_PAL and DS_PAL.accent or Color3.fromRGB(77,107,254),Thickness=1,Transparency=1,ApplyStrokeMode=Enum.ApplyStrokeMode.Border})
+end
+local stroke=outline:FindFirstChildOfClass("UIStroke")
+if stroke then DS_Tween(stroke,0.18,{Transparency=k==key and 0.18 or 1})end
 if k==key then
 DS_Tween(e,0.34,{Size=UDim2.new(0,3,0.62,0),BackgroundTransparency=0},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
 else
@@ -15909,40 +15581,27 @@ local DS_JUMPS={}
 local DS_JumpPanel=nil
 local DS_JumpBlocker=nil
 local function DS_FindGui(obj,depth,seen)
-if depth>4 then
-return nil
-end
 if typeof(obj)=="Instance"then
-if obj:IsA"GuiObject"then
-return obj
+local node=obj
+while node and node:IsA("GuiObject")do
+if node:GetAttribute("DSControl")then return node end
+node=node.Parent
 end
-return nil
+return obj:IsA("GuiObject")and obj or nil
 end
-if type(obj)~="table"then
-return nil
+if type(obj)~="table"then return nil end
+local ui=obj.UIElements
+if ui and ui.ControlRow then return ui.ControlRow end
+if obj.ElementFrame then
+local frame=obj.ElementFrame
+if typeof(frame)=="Instance"then return frame end
+if type(frame)=="table"and frame.UIElements then return frame.UIElements.Main end
 end
-if seen[obj]then
-return nil
+for _,key in ipairs({"SliderFrame","ButtonFrame","ToggleFrame","DropdownFrame","InputFrame","KeybindFrame","ColorpickerFrame","ParagraphFrame","CodeFrame"})do
+local f=obj[key]
+if type(f)=="table"and f.UIElements and f.UIElements.Main then return f.UIElements.Main end
 end
-seen[obj]=true
-local order={"Main","Frame","Container","ContainerFrame","Element","UIElements","Object","Button"}
-for _,k in next,order do
-local v=obj[k]
-if v~=nil then
-local r=DS_FindGui(v,depth+1,seen)
-if r then
-return r
-end
-end
-end
-for _,v in next,obj do
-if type(v)=="table"or typeof(v)=="Instance"then
-local r=DS_FindGui(v,depth+1,seen)
-if r then
-return r
-end
-end
-end
+if ui and ui.Main and typeof(ui.Main)=="Instance"then return ui.Main end
 return nil
 end
 local function DS_TabOf(t)
@@ -15961,11 +15620,20 @@ node=node.Parent
 end
 return nil
 end
+local function DS_ControlBox(t)
+local node=t
+while node and node:IsA("GuiObject")do
+if node:GetAttribute("DSControl")then return node end
+node=node.Parent
+end
+return t
+end
 local function DS_JumpTo(obj)
 local t=DS_FindGui(obj,0,{})
 if not t then
 return false
 end
+local box=DS_ControlBox(t)
 local pal=DS_PAL or{accent=Color3.fromHex"#4D6BFE"}
 task.spawn(function()
 local key=DS_TabOf(t)
@@ -15975,28 +15643,23 @@ DS_WIN:SelectTab(key)
 end)
 task.wait(0.07)
 end
-local sf=t:FindFirstAncestorOfClass"ScrollingFrame"
+for _,element in pairs(DS_WIN.AllElements or{})do
+if element.__type=="Section"and element.UIElements and element.UIElements.Content and box:IsDescendantOf(element.UIElements.Content)then element:Open()end
+end
+task.wait(0.28)
+local sf=box:FindFirstAncestorOfClass("ScrollingFrame")
 if sf then
-local ok,y=pcall(function()
-return t.AbsolutePosition.Y-sf.AbsolutePosition.Y+sf.CanvasPosition.Y
-end)
-if ok then
-local goal=math.max(0,y-t.AbsoluteSize.Y/2+sf.AbsoluteSize.Y/2)
-DS_Tween(sf,0.5,{CanvasPosition=Vector2.new(sf.CanvasPosition.X,goal)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
+local scale=DS_WIN:GetUIScale()or 1
+local y=(box.AbsolutePosition.Y-sf.AbsolutePosition.Y)/scale+sf.CanvasPosition.Y
+local height=box.AbsoluteSize.Y/scale
+local viewport=sf.AbsoluteWindowSize.Y/scale
+local maximum=math.max(0,(sf.AbsoluteCanvasSize.Y-sf.AbsoluteWindowSize.Y)/scale)
+local goal=math.clamp(y+height/2-viewport/2,0,maximum)
+DS_Tween(sf,0.32,{CanvasPosition=Vector2.new(sf.CanvasPosition.X,goal)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
 end
-end
-local us=t:FindFirstChild"DeepSeekJumpPop"
-if not us then
-us=DS_Node("UIScale",t,{Name="DeepSeekJumpPop",Scale=1})
-end
-us.Scale=1
-DS_Tween(us,0.24,{Scale=1.10},Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-task.delay(0.24,function()
-DS_Tween(us,0.36,{Scale=1},Enum.EasingStyle.Quad,Enum.EasingDirection.Out)
-end)
-local hl=t:FindFirstChild"DeepSeekJumpHL"
+local hl=box:FindFirstChild"DeepSeekJumpHL"
 if not hl then
-hl=DS_Node("Frame",t,{
+hl=DS_Node("Frame",box,{
 Name="DeepSeekJumpHL",
 Size=UDim2.fromScale(1,1),
 BackgroundTransparency=1,
@@ -16192,7 +15855,6 @@ DS_JumpTo(target)
 end)
 end)
 end
-row.MouseButton1Click:Connect(pick)
 row.Activated:Connect(pick)
 row.Visible=false
 task.delay(0.012*i,function()
@@ -16238,7 +15900,7 @@ lay.Padding=UDim.new(0,pad)
 end
 for _,r in next,DS_TickerRows do
 if r.holder and r.holder.Parent then
-r.holder.Size=UDim2.new(1,0,0,rowH)
+if not r.leaving then r.holder.Size=UDim2.new(1,0,0,rowH)end
 end
 end
 end
@@ -16254,189 +15916,295 @@ end
 local function DS_TickerFace()
 return DS_Face"Arcade"
 end
+
 local function DS_TickerRow(name,order)
-local holder=DS_Node("Frame",DS_TickerRoot,{
-Name="TickerRow",
-BackgroundTransparency=1,
-BorderSizePixel=0,
-Size=UDim2.new(1,0,0,DS_TickerRowH),
-LayoutOrder=order,
-ZIndex=701,
-})
-local glow=DS_Node("TextLabel",holder,{
-BackgroundTransparency=1,
-BorderSizePixel=0,
-Size=UDim2.fromScale(1,1),
-Text=name,
-TextScaled=true,
-TextXAlignment=Enum.TextXAlignment.Right,
-TextColor3=Color3.fromRGB(45,145,255),
-TextTransparency=0.72,
-ZIndex=701,
-})
-pcall(function()
-glow.FontFace=DS_TickerFace()
-end)
-DS_Node("UIStroke",glow,{Color=Color3.fromRGB(40,130,255),Thickness=0.8,Transparency=0.65})
-local label=DS_Node("TextLabel",holder,{
-BackgroundTransparency=1,
-BorderSizePixel=0,
-Size=UDim2.fromScale(1,1),
-Text=name,
-TextScaled=true,
-TextXAlignment=Enum.TextXAlignment.Right,
-TextColor3=Color3.new(1,1,1),
-ZIndex=702,
-})
-pcall(function()
-label.FontFace=DS_TickerFace()
-end)
-local grad=DS_Node("UIGradient",label,{
-Color=ColorSequence.new({
-ColorSequenceKeypoint.new(0,Color3.fromRGB(28,86,190)),
-ColorSequenceKeypoint.new(0.35,Color3.fromRGB(100,175,255)),
-ColorSequenceKeypoint.new(0.5,Color3.fromRGB(255,255,255)),
-ColorSequenceKeypoint.new(0.65,Color3.fromRGB(100,175,255)),
-ColorSequenceKeypoint.new(1,Color3.fromRGB(28,86,190)),
-}),
-Offset=Vector2.new(-1,0),
-})
-DS_Node("UIStroke",label,{Color=Color3.fromRGB(45,130,255),Thickness=0.45,Transparency=0.52})
-return{holder=holder,glow=glow,label=label,grad=grad}
+    local shift=math.clamp(math.floor(DS_TickerRowH*1.8),28,72)
+    local holder=DS_Node("Frame",DS_TickerRoot,{
+        Name="TickerRow",
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        Size=UDim2.new(1,0,0,0),
+        LayoutOrder=order,
+        ClipsDescendants=true,
+        ZIndex=701,
+    })
+    local body=DS_Node("Frame",holder,{
+        Name="TickerBody",
+        AnchorPoint=Vector2.new(0,0.5),
+        Position=UDim2.new(0,shift,0.5,0),
+        Size=UDim2.new(1,0,0,DS_TickerRowH),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ZIndex=701,
+    })
+    local glow=DS_Node("TextLabel",body,{
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        Size=UDim2.fromScale(1,1),
+        Text=name,
+        Font=Enum.Font.Arcade,
+        TextScaled=true,
+        TextWrapped=false,
+        TextXAlignment=Enum.TextXAlignment.Right,
+        TextYAlignment=Enum.TextYAlignment.Center,
+        TextColor3=Color3.fromRGB(45,145,255),
+        TextTransparency=1,
+        ZIndex=701,
+    })
+    pcall(function()glow.FontFace=DS_TickerFace()end)
+    local glowStroke=DS_Node("UIStroke",glow,{
+        Color=Color3.fromRGB(40,130,255),
+        Thickness=0.8,
+        Transparency=1,
+    })
+    local label=DS_Node("TextLabel",body,{
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        Size=UDim2.fromScale(1,1),
+        Text=name,
+        Font=Enum.Font.Arcade,
+        TextScaled=true,
+        TextWrapped=false,
+        TextXAlignment=Enum.TextXAlignment.Right,
+        TextYAlignment=Enum.TextYAlignment.Center,
+        TextColor3=Color3.new(1,1,1),
+        TextTransparency=1,
+        ZIndex=702,
+    })
+    pcall(function()label.FontFace=DS_TickerFace()end)
+    local grad=DS_Node("UIGradient",label,{
+        Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0,Color3.fromRGB(28,86,190)),
+            ColorSequenceKeypoint.new(0.35,Color3.fromRGB(100,175,255)),
+            ColorSequenceKeypoint.new(0.5,Color3.new(1,1,1)),
+            ColorSequenceKeypoint.new(0.65,Color3.fromRGB(100,175,255)),
+            ColorSequenceKeypoint.new(1,Color3.fromRGB(28,86,190)),
+        }),
+        Offset=Vector2.new(-1+2*((os.clock()%1.95)/1.95),0),
+    })
+    local stroke=DS_Node("UIStroke",label,{
+        Color=Color3.fromRGB(45,130,255),
+        Thickness=0.45,
+        Transparency=1,
+    })
+    local row={
+        holder=holder,label=label,glow=glow,grad=grad,body=body,
+        stroke=stroke,glowStroke=glowStroke,
+        name=name,seq=0,tweens={},leaving=false,dead=false,
+        state="new",height=DS_TickerRowH,
+    }
+
+    function row.cancel()
+        row.seq=row.seq+1
+        if row.complete then
+            row.complete:Disconnect()
+            row.complete=nil
+        end
+        local old=row.tweens
+        row.tweens={}
+        for _,tw in pairs(old)do
+            tw:Cancel()
+            tw:Destroy()
+        end
+    end
+
+    local function forget()
+        if row.dead then return end
+        row.dead=true
+        row.state="dead"
+        row.cancel()
+        if row.sizeConn then row.sizeConn:Disconnect();row.sizeConn=nil end
+        if row.destroyConn then row.destroyConn:Disconnect();row.destroyConn=nil end
+        if DS_TickerRows[name]==row then DS_TickerRows[name]=nil end
+    end
+
+    function row.dispose()
+        forget()
+        holder:Destroy()
+    end
+
+    function row.fit()
+        if row.dead or not body.Parent then return end
+        if row.height~=DS_TickerRowH then
+            row.height=DS_TickerRowH
+            body.Size=UDim2.new(1,0,0,DS_TickerRowH)
+            if not row.leaving and row.tweens.height then
+                local tw=row.tweens.height
+                row.tweens.height=nil
+                tw:Cancel()
+                tw:Destroy()
+            end
+        end
+    end
+    row.sizeConn=holder:GetPropertyChangedSignal("Size"):Connect(row.fit)
+    row.destroyConn=holder.Destroying:Connect(forget)
+
+    function row.animate(leaving)
+        if row.dead or not holder.Parent then return end
+        row.cancel()
+        row.leaving=leaving
+        row.state=leaving and "out" or "in"
+        row.fit()
+        local seq=row.seq
+        local function make(key,obj,time,props,style,direction,delay)
+            local tw=DS_TS:Create(obj,TweenInfo.new(
+                time,style,direction,0,false,delay or 0
+            ),props)
+            row.tweens[key]=tw
+            return tw
+        end
+        local slide=math.clamp(math.floor(DS_TickerRowH*1.8),28,72)
+        local move=make("move",body,leaving and 0.28 or 0.34,{
+            Position=UDim2.new(0,leaving and slide or 0,0.5,0),
+        },leaving and Enum.EasingStyle.Sine or Enum.EasingStyle.Quint,
+          leaving and Enum.EasingDirection.InOut or Enum.EasingDirection.Out)
+        local height=make("height",holder,leaving and 0.16 or 0.18,{
+            Size=UDim2.new(1,0,0,leaving and 0 or DS_TickerRowH),
+        },Enum.EasingStyle.Quint,
+          leaving and Enum.EasingDirection.In or Enum.EasingDirection.Out,
+          leaving and 0.14 or 0)
+        local fadeTime=leaving and 0.24 or 0.26
+        local fadeDirection=leaving and Enum.EasingDirection.In or Enum.EasingDirection.Out
+        make("label",label,fadeTime,{
+            TextTransparency=leaving and 1 or 0,
+        },Enum.EasingStyle.Sine,fadeDirection)
+        make("glow",glow,fadeTime,{
+            TextTransparency=leaving and 1 or 0.72,
+        },Enum.EasingStyle.Sine,fadeDirection)
+        make("stroke",stroke,fadeTime,{
+            Transparency=leaving and 1 or 0.52,
+        },Enum.EasingStyle.Sine,fadeDirection)
+        make("glowStroke",glowStroke,fadeTime,{
+            Transparency=leaving and 1 or 0.65,
+        },Enum.EasingStyle.Sine,fadeDirection)
+        local finish=leaving and height or move
+        row.complete=finish.Completed:Connect(function(playback)
+            if playback~=Enum.PlaybackState.Completed then return end
+            if row.dead or row.seq~=seq then return end
+            if leaving then
+                row.dispose()
+            else
+                row.cancel()
+                body.Position=UDim2.new(0,0,0.5,0)
+                holder.Size=UDim2.new(1,0,0,DS_TickerRowH)
+                label.TextTransparency=0
+                glow.TextTransparency=0.72
+                stroke.Transparency=0.52
+                glowStroke.Transparency=0.65
+                row.state="live"
+            end
+        end)
+        for _,tw in pairs(row.tweens)do tw:Play()end
+    end
+    return row
 end
+
 local function DS_TickerSync()
-if not DS_TickerRoot then
-return
+    if not DS_TickerRoot or not DS_TickerRoot.Parent then return end
+    local list,want={},{}
+    for _,value in ipairs(DS_TickerList)do
+        local name=tostring(value)
+        if not want[name]then
+            want[name]=true
+            list[#list+1]=name
+        end
+    end
+    DS_TickerList=list
+    if DS_TickerLine and DS_TickerLine.Parent then
+        DS_TickerLine.Visible=#list>0
+    end
+    local old={}
+    for name,row in pairs(DS_TickerRows)do
+        if row.dead or not row.holder or not row.holder.Parent then
+            if row.dispose then row.dispose()end
+            if DS_TickerRows[name]==row then DS_TickerRows[name]=nil end
+        else
+            old[#old+1]={row=row,name=name,order=row.holder.LayoutOrder}
+        end
+    end
+    table.sort(old,function(a,b)
+        if a.order==b.order then return a.name<b.name end
+        return a.order<b.order
+    end)
+    for _,item in ipairs(old)do
+        local row=item.row
+        if not want[item.name]and not row.leaving then row.animate(true)end
+    end
+    local active={}
+    for order,name in ipairs(list)do
+        local row=DS_TickerRows[name]
+        if not row then
+            row=DS_TickerRow(name,order)
+            DS_TickerRows[name]=row
+        end
+        if row.state=="new"or row.leaving then row.animate(false)end
+        active[#active+1]=row
+    end
+    local slots,nextLive={},1
+    for _,item in ipairs(old)do
+        local row=item.row
+        if not row.dead and row.holder.Parent then
+            if row.leaving then
+                slots[#slots+1]=row
+            elseif active[nextLive]then
+                slots[#slots+1]=active[nextLive]
+                nextLive=nextLive+1
+            end
+        end
+    end
+    while active[nextLive]do
+        slots[#slots+1]=active[nextLive]
+        nextLive=nextLive+1
+    end
+    for order,row in ipairs(slots)do row.holder.LayoutOrder=order end
 end
-local want={}
-for _,n in next,DS_TickerList do
-want[n]=true
-end
-for name,r in next,DS_TickerRows do
-if not want[name] then
-DS_TickerRows[name]=nil
-local holder=r.holder
-DS_Tween(r.label,0.16,{TextTransparency=1})
-DS_Tween(r.glow,0.16,{TextTransparency=1})
-DS_Tween(holder,0.24,{Size=UDim2.new(1,0,0,0)},Enum.EasingStyle.Quad,Enum.EasingDirection.In)
-task.delay(0.26,function()
-if holder and holder.Parent then
-holder:Destroy()
-end
-end)
-end
-end
-local order=0
-for _,name in next,DS_TickerList do
-order=order+1
-local r=DS_TickerRows[name]
-if not r then
-r=DS_TickerRow(name,order)
-DS_TickerRows[name]=r
-r.holder.Size=UDim2.new(1,0,0,0)
-r.label.TextTransparency=1
-r.glow.TextTransparency=1
-DS_Tween(r.holder,0.28,{Size=UDim2.new(1,0,0,DS_TickerRowH)},Enum.EasingStyle.Quint,Enum.EasingDirection.Out)
-DS_Tween(r.label,0.32,{TextTransparency=0})
-DS_Tween(r.glow,0.32,{TextTransparency=0.72})
-else
-r.holder.LayoutOrder=order
-end
-end
-end
+
 local function DS_TickerSet(list)
-DS_TickerList={}
-for _,v in next,list or{}do
-table.insert(DS_TickerList,tostring(v))
+    DS_TickerList={}
+    for _,value in ipairs(list or {})do
+        DS_TickerList[#DS_TickerList+1]=tostring(value)
+    end
+    DS_TickerSync()
 end
-DS_TickerSync()
-end
+
 local function DS_TickerAdd(name)
-name=tostring(name)
-for _,v in next,DS_TickerList do
-if v==name then
-return
+    name=tostring(name)
+    for _,value in ipairs(DS_TickerList)do
+        if value==name then return end
+    end
+    DS_TickerList[#DS_TickerList+1]=name
+    DS_TickerSync()
 end
-end
-table.insert(DS_TickerList,name)
-DS_TickerSync()
-end
+
 local function DS_TickerRemove(name)
-name=tostring(name)
-for i=#DS_TickerList,1,-1 do
-if DS_TickerList[i]==name then
-table.remove(DS_TickerList,i)
+    name=tostring(name)
+    for i=#DS_TickerList,1,-1 do
+        if DS_TickerList[i]==name then table.remove(DS_TickerList,i)end
+    end
+    DS_TickerSync()
 end
-end
-DS_TickerSync()
-end
+
 local function DS_TickerClear()
-DS_TickerList={}
-DS_TickerSync()
+    DS_TickerList={}
+    DS_TickerSync()
 end
 local DS_Snd=nil
 local DS_SndVol=0.55
+local DS_WelcomeSoundName="welcome_new.mp3"
 local function DS_PlaySound(vol)
-if vol then
-DS_SndVol=math.clamp(tonumber(vol)or 0.55,0,3)
-end
-if not(writefile and getcustomasset)then
+if vol then DS_SndVol=math.clamp(tonumber(vol)or 0.55,0,3)end
+local id=DS_Asset(DS_WelcomeSoundName)
+if type(id)~="string"or id==""then
+warn("[DeepSeekUI] could not resolve the welcome audio asset")
 return nil
 end
-local name="DeepSeekUI/load.mp3"
-local have=false
-if isfile and isfile(name)then
-have=true
-end
-if not have then
-DS_EnsureDir()
-local b
-for _,x in next,DS_CDN do
-b=DS_Request(x.."load.mp3")
-if b then
-break
-end
-end
-if not b then
-return nil
-end
-if not pcall(writefile,name,b)then
-return nil
-end
-end
-local id
-local ok=pcall(function()
-id=getcustomasset(name)
-end)
-if not ok or type(id)~="string"then
-return nil
-end
-pcall(function()
-if DS_Snd then
-DS_Snd:Destroy()
-end
-end)
-local svc=game:GetService"SoundService"
-DS_Snd=DS_Node("Sound",svc,{
-Name="DeepSeekLoad",
-SoundId=id,
-Volume=DS_SndVol,
-PlayOnRemove=false,
-Looped=false,
-})
-pcall(function()
-DS_Snd:Play()
-end)
+if DS_Snd then pcall(function()DS_Snd:Destroy()end)end
+DS_Snd=DS_Node("Sound",game:GetService("SoundService"),{Name="DeepSeekWelcome",SoundId=id,Volume=DS_SndVol,PlayOnRemove=false,Looped=false})
+pcall(function()DS_Snd:Play()end)
 return DS_Snd
 end
 local function DS_StopSound()
-pcall(function()
-if DS_Snd then
-DS_Snd:Stop()
-DS_Snd:Destroy()
-DS_Snd=nil
-end
-end)
+if DS_Snd then pcall(function()DS_Snd:Stop();DS_Snd:Destroy()end);DS_Snd=nil end
 end
 local DS_Parts={}
 local DS_State={pet=true,sitter=true,sticker=true,ticker=true,bg=true,sheen=true,jag=true,glow=true,sound=true}
@@ -16569,7 +16337,88 @@ return c
 end
 return(root and root.Parent)or root
 end
-local DS_FullClose=false
+local DS_Visuals={}
+local DS_VisualRoot=nil
+local DS_VisualWindow=nil
+local DS_VisualConnection=nil
+local function DS_RegisterVisual(node,kind)
+if not node then return end
+DS_Visuals[node]={node=node,kind=kind or"toggle",base=node.Position,rotation=node.Rotation or 0}
+end
+local function DS_VisualShadow(node)
+if not node or not node.Parent then return end
+local shadows={}
+for index=1,3 do
+local shadow=DS_Node("ImageLabel",node.Parent,{
+Name=node.Name.."Shadow"..index,BackgroundTransparency=1,BorderSizePixel=0,Active=false,
+Image=node.Image,ImageColor3=Color3.new(0,0,0),ImageTransparency=0.87+index*0.025,
+Size=node.Size,Position=node.Position+UDim2.fromOffset(index*1.5,index*2.5),AnchorPoint=node.AnchorPoint,
+Rotation=node.Rotation,ScaleType=Enum.ScaleType.Fit,ZIndex=node.ZIndex-1,
+})
+shadows[#shadows+1]=shadow
+end
+local links={}
+local function sync()
+for index,shadow in ipairs(shadows)do
+if shadow.Parent then
+shadow.Image=node.Image
+shadow.Size=node.Size
+shadow.Position=node.Position+UDim2.fromOffset(index*1.5,index*2.5)
+shadow.AnchorPoint=node.AnchorPoint
+shadow.Rotation=node.Rotation
+shadow.Visible=node.Visible
+end
+end
+end
+for _,key in ipairs({"Image","Size","Position","Rotation","Visible","AnchorPoint"})do links[#links+1]=node:GetPropertyChangedSignal(key):Connect(sync)end
+node.Destroying:Connect(function()
+for _,link in ipairs(links)do link:Disconnect()end
+for _,shadow in ipairs(shadows)do shadow:Destroy()end
+end)
+end
+local function DS_AdvanceSpring(position,velocity,target,dt)
+local remaining=math.min(dt,0.05)
+while remaining>0 do
+local step=math.min(remaining,1/120)
+velocity=velocity+((target-position)*324-velocity*20)*step
+position=position+velocity*step
+remaining=remaining-step
+end
+if math.abs(position-target)<0.002 and math.abs(velocity)<0.002 then return target,0 end
+return position,velocity
+end
+local function DS_SetupVisuals(h,root)
+DS_VisualWindow=h
+DS_VisualRoot=root
+if DS_VisualConnection then DS_VisualConnection:Disconnect()end
+local prior=root.AbsolutePosition
+local x,y,vx,vy=0,0,0,0
+DS_VisualConnection=game:GetService("RunService").RenderStepped:Connect(function(dt)
+if not root.Parent then return end
+local current=root.AbsolutePosition
+local scale=math.max(h:GetUIScale()or 1,0.1)
+local movement=current-prior
+prior=current
+local active=h.Dragging and root.Visible
+local targetX=active and math.clamp(-movement.X/math.max(dt,1/240)/scale*0.032,-24,24)or 0
+local targetY=active and math.clamp(-movement.Y/math.max(dt,1/240)/scale*0.022,-16,16)or 0
+if not root.Visible then x,y,vx,vy=0,0,0,0 end
+x,vx=DS_AdvanceSpring(x,vx,targetX,dt)
+y,vy=DS_AdvanceSpring(y,vy,targetY,dt)
+for node,entry in pairs(DS_Visuals)do
+if not node.Parent then DS_Visuals[node]=nil
+else
+local gain=entry.kind=="toggle"and 0.55 or(entry.kind=="slider"and 0.50 or(entry.kind=="pet"and 1.35 or 1))
+node.Position=entry.base+UDim2.fromOffset(x*gain,y*gain)
+if entry.kind=="pet"or entry.kind=="sticker"then node.Rotation=entry.rotation+math.clamp(-x*0.23*gain,-5,5)end
+end
+end
+end)
+root.Destroying:Connect(function()
+if DS_VisualConnection then DS_VisualConnection:Disconnect();DS_VisualConnection=nil end
+DS_Visuals={}
+end)
+end
 
 local function DS_Apply(h,w)
 local root=h and h.UIElements and h.UIElements.Main
@@ -16578,47 +16427,51 @@ return
 end
 DS_ROOT=root.Parent or root
 DS_WIN=h
+DS_LIBRARY=w
+DS_SetupVisuals(h,root)
 local pal=DS_Palette(w.Theme and w.Theme.Name or DS_THEME)
+pcall(function()
+local T=w and w.Themes
+if not T then
+return
+end
+local D=T.Dark
+if D then
+D.Notification=Color3.fromHex"#12161f"
+D.Notification2=Color3.fromHex"#12161f"
+D.Notification2Transparency=1
+D.NotificationTitle=Color3.new(1,1,1)
+D.NotificationContent=Color3.new(1,1,1)
+D.NotificationContentTransparency=0.35
+end
+local L=T.Light
+if L then
+L.Notification=Color3.fromHex"#FFFFFF"
+L.Notification2=Color3.fromHex"#FFFFFF"
+L.Notification2Transparency=1
+L.NotificationTitle=Color3.fromHex"#0E1526"
+L.NotificationContent=Color3.fromHex"#0E1526"
+L.NotificationContentTransparency=0.35
+end
+end)
 pcall(function()
 local T=w and w.Themes
 if not(T and T.Light)then
 return
 end
 local L=T.Light
-L.TabBackgroundHoverTransparency=0.25
-L.TabBackgroundActiveTransparency=0.22
-L.PanelBackgroundTransparency=0.35
-L.LabelBackgroundTransparency=0.35
-L.ElementBackgroundTransparency=0.30
-L.ScrollBarImageTransparency=0.45
+L.TabBackgroundHoverTransparency=0.62
+L.TabBackgroundActiveTransparency=0.58
+L.PanelBackgroundTransparency=0.72
+L.LabelBackgroundTransparency=0.72
+L.ElementBackgroundTransparency=0.66
+L.TabBackgroundActive=Color3.fromHex"#D7E3FF"
+L.TabBackgroundHover=Color3.fromHex"#E8EFFF"
+L.ElementBackground=Color3.fromHex"#FFFFFF"
+L.PanelBackground=Color3.fromHex"#EAF1FF"
+L.ScrollBarImageTransparency=0.55
 end)
 DS_PAL=pal
-DS_Stage("pack",function()
-local pk={Icons={},Spritesheets={}}
-local function reg(name,id,w,h)
-pk.Spritesheets[name]=id
-pk.Icons[name]={
-Image=name,
-ImageRectSize=Vector2.new(w,h),
-ImageRectPosition=Vector2.new(0,0),
-}
-end
-reg("logo","rbxassetid://76812298700165",1024,780)
-reg("lockup","rbxassetid://134655875998764",1024,164)
-reg("logo-mono","rbxassetid://108023120756076",1024,780)
-reg("lockup-mono","rbxassetid://106034927644134",1024,164)
-pcall(function()
-local mod=w and w.Icons
-if mod and mod.Icons then
-mod.Icons.ds=pk
-end
-end)
-if _G then
-_G.DS_Icons=_G.DS_Icons or{}
-_G.DS_Icons.ds=pk
-end
-end)
-
 DS_Stage("scale",function()
 pcall(function()
 local vp=DS_Viewport()
@@ -16636,89 +16489,116 @@ if sc then
 sc.Scale=Q
 end
 end)
+
 DS_Stage("ticker",function()
-local sg=DS_ScreenRoot(root,h,al)
-DS_TickerRoot=DS_Node("Frame",sg,{
-Name="DeepSeekTicker",
-AnchorPoint=Vector2.new(1,0),
-Position=UDim2.new(1,-10,0,10),
-Size=UDim2.fromOffset(200,300),
-BackgroundTransparency=1,
-BorderSizePixel=0,
-ClipsDescendants=true,
-ZIndex=700,
-})
-DS_Node("UIListLayout",DS_TickerRoot,{
-SortOrder=Enum.SortOrder.LayoutOrder,
-HorizontalAlignment=Enum.HorizontalAlignment.Right,
-VerticalAlignment=Enum.VerticalAlignment.Top,
-Padding=UDim.new(0,2),
-})
-DS_Node("UIPadding",DS_TickerRoot,{
-PaddingRight=UDim.new(0,16),
-})
-DS_TickerLine=DS_Node("Frame",sg,{
-Name="DeepSeekTickerLine",
-AnchorPoint=Vector2.new(1,0),
-Position=UDim2.new(1,-10,0,10),
-Size=UDim2.fromOffset(1,300),
-BackgroundColor3=pal.accent,
-BackgroundTransparency=0,
-BorderSizePixel=0,
-ZIndex=699,
-})
-DS_Node("UIGradient",DS_TickerLine,{
-Rotation=90,
-Transparency=NumberSequence.new{
-NumberSequenceKeypoint.new(0,1),
-NumberSequenceKeypoint.new(0.18,0.55),
-NumberSequenceKeypoint.new(0.5,0.12),
-NumberSequenceKeypoint.new(0.82,0.55),
-NumberSequenceKeypoint.new(1,1),
-},
-})
-DS_TickerApplySize()
-DS_TickerSync()
-task.spawn(function()
-while DS_TickerRoot and DS_TickerRoot.Parent do
-for _,r in next,DS_TickerRows do
-if r.grad and r.grad.Parent then
-r.grad.Offset=Vector2.new(-1,0)
-end
-end
-for _,r in next,DS_TickerRows do
-if r.grad and r.grad.Parent then
-DS_Tween(r.grad,1.8,{Offset=Vector2.new(1,0)},Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
-end
-end
-task.wait(1.95)
-end
-end)
-task.spawn(function()
-while DS_TickerRoot and DS_TickerRoot.Parent do
-task.wait(0.5)
-pcall(DS_TickerApplySize)
-end
-end)
-task.spawn(function()
-task.wait(0.6)
-while DS_TickerLine and DS_TickerLine.Parent do
-DS_Tween(DS_TickerLine,1.8,{BackgroundTransparency=0.45},Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
-task.wait(1.8)
-if not DS_TickerLine.Parent then
-break
-end
-DS_Tween(DS_TickerLine,1.8,{BackgroundTransparency=0},Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
-task.wait(1.8)
-end
-end)
+    local sg=DS_ScreenRoot(root,h,al)
+    DS_TickerRoot=DS_Node("Frame",sg,{
+        Name="DeepSeekTicker",
+        AnchorPoint=Vector2.new(1,0),
+        Position=UDim2.new(1,-10,0,10),
+        Size=UDim2.fromOffset(200,300),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ClipsDescendants=true,
+        ZIndex=700,
+    })
+    local tickerRoot=DS_TickerRoot
+    DS_Node("UIListLayout",tickerRoot,{
+        SortOrder=Enum.SortOrder.LayoutOrder,
+        HorizontalAlignment=Enum.HorizontalAlignment.Right,
+        VerticalAlignment=Enum.VerticalAlignment.Top,
+        Padding=UDim.new(0,2),
+    })
+    DS_Node("UIPadding",tickerRoot,{
+        PaddingRight=UDim.new(0,4),
+    })
+    DS_TickerLine=DS_Node("Frame",sg,{
+        Name="DeepSeekTickerLine",
+        AnchorPoint=Vector2.new(0,0),
+        Position=UDim2.new(1,-10,0,10),
+        Size=UDim2.fromOffset(1,300),
+        BackgroundColor3=pal.accent,
+        BackgroundTransparency=0,
+        BorderSizePixel=0,
+        Visible=false,
+        ZIndex=699,
+    })
+    local line=DS_TickerLine
+    DS_Node("UIGradient",line,{
+        Rotation=90,
+        Transparency=NumberSequence.new{
+            NumberSequenceKeypoint.new(0,1),
+            NumberSequenceKeypoint.new(0.18,0.55),
+            NumberSequenceKeypoint.new(0.5,0.12),
+            NumberSequenceKeypoint.new(0.82,0.55),
+            NumberSequenceKeypoint.new(1,1),
+        },
+    })
+    local function applySize()
+        DS_TickerApplySize()
+        if line.Parent then
+            line.Position=tickerRoot.Position
+            line.Size=UDim2.new(0,1,tickerRoot.Size.Y.Scale,tickerRoot.Size.Y.Offset)
+        end
+        for _,row in pairs(DS_TickerRows)do
+            if row.fit then row.fit()end
+        end
+    end
+    applySize()
+    DS_TickerSync()
+    local lastView=DS_Viewport()
+    local sweep,cleanup
+    local closed=false
+    local function close()
+        if closed then return end
+        closed=true
+        if sweep then sweep:Disconnect();sweep=nil end
+        if cleanup then cleanup:Disconnect();cleanup=nil end
+        local rows={}
+        for _,row in pairs(DS_TickerRows)do rows[#rows+1]=row end
+        for _,row in ipairs(rows)do
+            if row.dispose then row.dispose()end
+        end
+        if line.Parent then line:Destroy()end
+        if DS_TickerRoot==tickerRoot then DS_TickerRoot=nil end
+        if DS_TickerLine==line then DS_TickerLine=nil end
+    end
+    sweep=game:GetService("RunService").RenderStepped:Connect(function()
+        if closed then return end
+        if not tickerRoot.Parent then close();return end
+        local view=DS_Viewport()
+        if view~=lastView then
+            lastView=view
+            applySize()
+        end
+        local now=os.clock()
+        local offset=Vector2.new(-1+2*((now%1.95)/1.95),0)
+        for _,row in pairs(DS_TickerRows)do
+            if row.grad and row.grad.Parent then row.grad.Offset=offset end
+        end
+        if line.Parent then
+            line.Visible=#DS_TickerList>0
+            line.BackgroundTransparency=0.225*(1-math.cos(now*math.pi/1.8))
+        end
+    end)
+    cleanup=tickerRoot.Destroying:Connect(close)
 end)
 
 local bg=root:FindFirstChild"Background"
 local bgImg
 local glowStroke
+local function DS_FirstAsset(list)
+local order={}
+local start=math.random(#list)
+for i=0,#list-1 do order[#order+1]=list[((start+i-1)%#list)+1]end
+for _,name in ipairs(order)do
+local id=DS_Asset(name)
+if id then return id,name end
+end
+return nil,nil
+end
 if bg then
-local id=DS_Asset(DS_Pick(DS_BG))
+local id,bgName=DS_FirstAsset(DS_BG)
 if id then
 local bl=math.random(7,14)
 local br=math.random(7,14)
@@ -16733,15 +16613,15 @@ Size=UDim2.new(1,bl+br,1,bt+bb),
 Position=UDim2.fromOffset(-bl,-bt),
 Rotation=math.random(-14,14)/10,
 ZIndex=-20,
-ImageTransparency=pal.glass,
+ImageTransparency=pal.bgTop,
 Image=id,
 })
 DS_Node("UIGradient",bgImg,{
 Rotation=90,
 Transparency=NumberSequence.new{
-NumberSequenceKeypoint.new(0,pal.glass),
-NumberSequenceKeypoint.new(0.50,math.min(0.99,pal.glass+0.05)),
-NumberSequenceKeypoint.new(1,math.min(0.99,pal.glass+pal.fade)),
+NumberSequenceKeypoint.new(0,pal.bgTop),
+NumberSequenceKeypoint.new(0.50,pal.bgMid),
+NumberSequenceKeypoint.new(1,pal.bgBottom),
 },
 })
 end
@@ -16856,18 +16736,10 @@ Position=UDim2.new(0,-152,0.54,8),
 Rotation=-3,
 ZIndex=-60,
 })
+DS_RegisterVisual(pet,"pet")
+DS_VisualShadow(pet)
 
-task.spawn(function()
-while pet.Parent do
-DS_Tween(pet,3.4,{Rotation=1.5},Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
-task.wait(3.4)
-if not pet.Parent then
-break
-end
-DS_Tween(pet,3.4,{Rotation=-4.5},Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
-task.wait(3.4)
-end
-end)
+
 end
 local sitId=DS_Asset(DS_Pick(DS_TOP))
 if sitId then
@@ -16881,7 +16753,7 @@ Size=UDim2.fromOffset(156,156),
 AnchorPoint=Vector2.new(0.5,1),
 Position=UDim2.new(0.62,0,0,22),
 Rotation=2,
-ZIndex=320,
+ZIndex=-75,
 })
 task.spawn(function()
 local up=UDim2.new(0.62,0,0,16)
@@ -16910,6 +16782,8 @@ AnchorPoint=Vector2.new(1,1),
 Position=UDim2.new(1,-8,1,-8),
 ZIndex=470,
 })
+DS_RegisterVisual(stick,"sticker")
+DS_VisualShadow(stick)
 local function reshuffle()
 local id=DS_Asset(DS_Pick(DS_STIKER))
 if id then
@@ -16931,28 +16805,7 @@ end
 end
 end)
 end
-stick.MouseEnter:Connect(function()
-DS_Tween(stick,0.16,{Size=UDim2.fromOffset(108,108)})
-end)
-stick.MouseLeave:Connect(function()
-DS_Tween(stick,0.2,{Size=baseSize})
-end)
-stick.MouseButton1Click:Connect(function()
-reshuffle()
-DS_Tween(stick,0.1,{Size=UDim2.fromOffset(118,118)},Enum.EasingStyle.Back)
-task.delay(0.1,function()
-DS_Tween(stick,0.26,{Size=baseSize},Enum.EasingStyle.Back,Enum.EasingDirection.Out)
-end)
-end)
-task.spawn(function()
-while stick.Parent do
-task.wait(3.2)
-if not stick.Parent then
-break
-end
-DS_Tween(stick,0.3,{Rotation=math.random(-6,6)},Enum.EasingStyle.Sine,Enum.EasingDirection.InOut)
-end
-end)
+stick.Activated:Connect(function()task.spawn(reshuffle)end)
 local sheenHolder=DS_Node("Frame",root,{
 Name="DeepSeekSheenHolder",
 AnchorPoint=Vector2.new(0.5,0.5),
@@ -17006,29 +16859,12 @@ end
 local lastShift=0
 root:GetPropertyChangedSignal"Position":Connect(function()
 local now=tick()
-if now-lastShift>0.4 then
-lastShift=now
-reshuffle()
-end
+if now-lastShift>0.4 then lastShift=now end
 lightUp()
 end)
 root:GetPropertyChangedSignal"Size":Connect(function()
 lightUp()
 end)
-for _,n in ipairs(root:GetDescendants())do
-if n:IsA"GuiButton"and not n:FindFirstAncestor"Topbar"and n~=stick then
-local an=n.AnchorPoint
-local po=n.Position
-if(an.X>0.9 or po.X.Scale>0.9)and(an.Y>0.9 or po.Y.Scale>0.9)then
-pcall(function()
-n.ImageTransparency=1
-n.BackgroundTransparency=1
-n.BackgroundColor3=Color3.new(1,1,1)
-n.Active=false
-end)
-end
-end
-end
 local openId=DS_Asset"open.png"
 local dragId=DS_Asset"open_drag.png"
 local ob=h.OpenButtonMain
@@ -17036,45 +16872,37 @@ DS_Stage("bye",function()
 DS_Bye=function()
 end
 DS_Close=function()
-if DS_FullClose then
-return
+if h and type(h.Destroy)=="function"then
+return h:Destroy()
 end
-DS_FullClose=true
-task.delay(0.10,function()
-pcall(function()
-if h.Destroy then
-h:Destroy()
-else
-local sg=DS_ScreenRoot(root,h,al)
-if sg then
-sg:Destroy()
-end
-end
-end)
-end)
 end
 if _G then
 _G.DS_Close=DS_Close
 end
 end)
 
+DS_Stage("topbar",function()
+h:DisableTopbarButtons({"Fullscreen"})
+local tb=h.UIElements.Main.Main.Topbar
+local holder=tb.Center.Holder
+holder.Active=false
+holder.ScrollingEnabled=false
+tb.Center.Active=false
+end)
 DS_Stage("brand",function()
 local sg=DS_ScreenRoot(root,h,al)
 local b=DS_Asset"ds-lockup-blue.png"
 local k=DS_Asset"ds-lockup-black.png"
 local lg=DS_Asset"ds-logo-blue.png"
-if lg and _G and _G.DS_Icons and _G.DS_Icons.ds then
-_G.DS_Icons.ds.logo=lg
-end
 if b and k and sg then
 local vp=DS_Viewport()
-local wS=0.145
+local wS=0.09
 local hS=wS*(41/256)*(vp.X/math.max(1,vp.Y))
 local function mk(img,tr)
 return DS_Node("ImageLabel",sg,{
 Name="DeepSeekBrand",
 AnchorPoint=Vector2.new(0,1),
-Position=UDim2.new(0,0.055,1,-0.055),
+Position=UDim2.new(0,0.018,1,-0.025),
 Size=UDim2.new(wS,0,hS,0),
 BackgroundTransparency=1,
 BorderSizePixel=0,
@@ -17084,7 +16912,7 @@ ImageTransparency=tr,
 ZIndex=690,
 })
 end
-local A=mk(b,0.12)
+local A=mk(b,0.06)
 local B=mk(k,1)
 task.spawn(function()
 local on=true
@@ -17301,28 +17129,20 @@ reopening=false
 end)
 end
 miniBtn.Activated:Connect(function()
-if moved>10 then
-return
-end
-pcall(function()
+if moved>10 or reopening or not h.Closed then return end
+reopen()
+task.spawn(function()
 if math.random()<0.55 then
 local id=DS_Asset(DS_Pick(DS_PET))
-local p=root:FindFirstChild"DeepSeekPet"
-if id and p then
-p.Image=id
-end
+local pet=root:FindFirstChild("DeepSeekPet")
+if id and pet then pet.Image=id end
 end
 if math.random()<0.55 and bgImg then
-local id=DS_Asset(DS_Pick(DS_BG))
-if id then
-bgImg.Image=id
-end
+local id=DS_FirstAsset(DS_BG)
+if id and bgImg.Parent then bgImg.Image=id end
 end
 end)
-reopen()
 end)
-
-
 miniBtn.MouseEnter:Connect(function()
 if dragging then
 return
@@ -17415,75 +17235,17 @@ end)
 end)
 end)
 end)
-DS_Parts.pet={root:FindFirstChild"DeepSeekPet"}
-DS_Parts.sitter={root:FindFirstChild"DeepSeekSitter"}
-DS_Parts.sticker={root:FindFirstChild"DeepSeekSticker"}
-DS_Parts.sheen={root:FindFirstChild"DeepSeekSheenHolder"}
-DS_Parts.glow={root:FindFirstChild"DeepSeekGlow"}
-DS_Parts.bg={bg and bg:FindFirstChild"DeepSeekBackground"}
+DS_Parts.pet={root:FindFirstChild("DeepSeekPet")}
+DS_Parts.sitter={root:FindFirstChild("DeepSeekSitter")}
+DS_Parts.sticker={root:FindFirstChild("DeepSeekSticker")}
+DS_Parts.sheen={root:FindFirstChild("DeepSeekSheenHolder")}
+DS_Parts.glow={root:FindFirstChild("DeepSeekGlow")}
+DS_Parts.bg={bg and bg:FindFirstChild("DeepSeekBackground")}
 DS_Parts.ticker={DS_TickerRoot,DS_TickerLine}
 DS_Parts.jag={}
-for _,c in next,root:GetChildren()do
-if c.Name=="DeepSeekJag"then
-table.insert(DS_Parts.jag,c)
-end
-end
-DS_Parts.pet={root:FindFirstChild"DeepSeekPet"}
-DS_Parts.sitter={root:FindFirstChild"DeepSeekSitter"}
-DS_Parts.sticker={root:FindFirstChild"DeepSeekSticker"}
-DS_Parts.sheen={root:FindFirstChild"DeepSeekSheenHolder"}
-DS_Parts.glow={root:FindFirstChild"DeepSeekGlow"}
-DS_Parts.bg={bg and bg:FindFirstChild"DeepSeekBackground"}
-DS_Parts.ticker={DS_TickerRoot,DS_TickerLine}
-DS_Parts.jag={}
-for _,c in next,root:GetChildren()do
-if c.Name=="DeepSeekJag"then
-table.insert(DS_Parts.jag,c)
-end
-end
+for _,child in ipairs(root:GetChildren())do if child.Name=="DeepSeekJag"then table.insert(DS_Parts.jag,child)end end
 
-DS_Parts.pet={root:FindFirstChild"DeepSeekPet"}
-DS_Parts.sitter={root:FindFirstChild"DeepSeekSitter"}
-DS_Parts.sticker={root:FindFirstChild"DeepSeekSticker"}
-DS_Parts.sheen={root:FindFirstChild"DeepSeekSheenHolder"}
-DS_Parts.glow={root:FindFirstChild"DeepSeekGlow"}
-DS_Parts.bg={bg and bg:FindFirstChild"DeepSeekBackground"}
-DS_Parts.ticker={DS_TickerRoot,DS_TickerLine}
-DS_Parts.jag={}
-for _,c in next,root:GetChildren()do
-if c.Name=="DeepSeekJag"then
-table.insert(DS_Parts.jag,c)
-end
-end
-
-DS_Parts.pet={root:FindFirstChild"DeepSeekPet"}
-DS_Parts.sitter={root:FindFirstChild"DeepSeekSitter"}
-DS_Parts.sticker={root:FindFirstChild"DeepSeekSticker"}
-DS_Parts.sheen={root:FindFirstChild"DeepSeekSheenHolder"}
-DS_Parts.glow={root:FindFirstChild"DeepSeekGlow"}
-DS_Parts.bg={bg and bg:FindFirstChild"DeepSeekBackground"}
-DS_Parts.ticker={DS_TickerRoot,DS_TickerLine}
-DS_Parts.jag={}
-for _,c in next,root:GetChildren()do
-if c.Name=="DeepSeekJag"then
-table.insert(DS_Parts.jag,c)
-end
-end
-
-DS_Parts.pet={root:FindFirstChild"DeepSeekPet"}
-DS_Parts.sitter={root:FindFirstChild"DeepSeekSitter"}
-DS_Parts.sticker={root:FindFirstChild"DeepSeekSticker"}
-DS_Parts.sheen={root:FindFirstChild"DeepSeekSheenHolder"}
-DS_Parts.glow={root:FindFirstChild"DeepSeekGlow"}
-DS_Parts.bg={bg and bg:FindFirstChild"DeepSeekBackground"}
-DS_Parts.ticker={DS_TickerRoot,DS_TickerLine}
-DS_Parts.jag={}
-for _,c in next,root:GetChildren()do
-if c.Name=="DeepSeekJag"then
-table.insert(DS_Parts.jag,c)
-end
-end
-
+DS_SetFont(DS_FONT)
 task.delay(1.4,DS_ApplyFont)
 end
 DS_SetFont=DS_SetFont
@@ -17571,6 +17333,40 @@ _G.DS_LOGO=DS_LOGO
 _G.DS_State=DS_State
 _G.DS_Debug=DS_Debug
 end
+
+aa.DeepSeek={
+Build=80,Fonts=DS_FontNames,SetFont=DS_SetFont,SetFontIndex=DS_SetFontIndex,
+LoadFontUrl=DS_LoadFontUrl,ApplyFont=DS_ApplyFont,SetFontScale=DS_SetFontScale,
+RegisterJump=DS_RegisterJump,JumpNames=DS_JumpNames,JumpTo=DS_JumpTo,JumpToName=DS_JumpToName,
+OpenJump=DS_OpenJump,Ticker=DS_Ticker,SetPart=DS_SetPart,Asset=DS_Asset,
+SetMiniScale=DS_SetMiniScale,Debug=DS_Debug,PlaySound=DS_PlaySound,StopSound=DS_StopSound,
+}
+
+aa.Asset=DS_Asset
+aa.Creator.ResolveBrandImage=function(value)
+local names={['ds:logo']='ds-logo-blue.png',['ds:lockup']='ds-lockup-black.png',['ds:logo-mono']='ds-logo-black.png',['ds:lockup-blue']='ds-lockup-blue.png'}
+local name=names[value]
+if name then return DS_Asset(name)end
+return value
+end
+
+aa.DeepSeek.SetPalette=function(accent,soft)
+if not DS_PAL then return false end
+if typeof(accent)=="Color3"then DS_PAL.accent=accent end
+if typeof(soft)=="Color3"then DS_PAL.soft=soft end
+for _,name in ipairs({"Dark","Light"})do
+local t=aa.Themes and aa.Themes[name]
+if t then for _,key in ipairs({"Button","Primary","Toggle","Slider","Checkbox"})do t[key]=DS_PAL.accent end end
+end
+if aa.Theme then aa:SetTheme(aa.Theme.Name)end
+return true
+end
+
+aa.Creator.RegisterVisualInertia=DS_RegisterVisual
+
+aa.Creator.LoadNotificationPet=function()
+return DS_Asset(DS_Pick(DS_TOP))
+end
 aa.Themes=a.load'v'(aa,as)
 
 as.Themes=aa.Themes
@@ -17603,9 +17399,8 @@ end
 
 local b=true
 
-local d=aa.Themes[aA.Theme or DS_THEME]
-
-
+local d=aa.Themes[aA.Theme or DS_THEME]or aa.Themes[DS_THEME]
+aa.Theme=d
 as.SetTheme(d)
 
 local f=gethwid or function()
